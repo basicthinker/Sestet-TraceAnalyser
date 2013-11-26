@@ -19,7 +19,7 @@ inline double tv_float(const struct timeval32 &tv) {
 }
 
 struct te_page {
-  char te_type;
+  char te_op;
   char te_hit;
   uint32_t te_ino;
   uint32_t te_pgi;
