@@ -7,6 +7,8 @@
 #ifndef SESTET_TRACE_ANALYSER_KERNEL_STRUCT_H_
 #define SESTET_TRACE_ANALYSER_KERNEL_STRUCT_H_
 
+#include <stdint.h>
+
 struct timeval32 {
   uint32_t tv_sec;
   uint32_t tv_usec;
