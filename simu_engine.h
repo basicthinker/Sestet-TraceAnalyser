@@ -19,7 +19,7 @@ class SimuEngine {
   public:
     void Register(SimuState &state);
     void Input(DataOperation op, const struct DataItem &item);
-    void Clear() { cache_.clear(); }
+    void Clear();
     bool to_fsync() { return to_fsync_; }
     void set_to_fsync(bool to_fsync) { to_fsync_ = to_fsync; } 
  private:
@@ -69,9 +69,10 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
       for (std::set<PageTag>::iterator tag_i = cache_.begin();
           tag_i != cache_.end(); ) {
         if (tag_i->first == item.di_ino) {
+          DataItem flushed = { -1, tag_i->first, tag_i->second };
           cache_.erase(tag_i++);
           for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
-            (*state_i)->OnFlush(item);
+            (*state_i)->OnFlush(flushed);
           }
         } else ++tag_i;
       }
@@ -80,6 +81,18 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
  defalt:
     cerr << "Warning: invalid trace entry type: " << op << endl;
   }
+}
+
+void SimuEngine::Clear() {
+  for (std::set<PageTag>::iterator i = cache_.begin();
+      i != cache_.end(); ++i) {
+    DataItem flushed = { -1, i->first, i->second };
+    for (std::list<SimuState *>::iterator j = states_.begin();
+        j != states_.end(); ++j) {
+      (*j)->OnFlush(flushed);
+    }
+  }
+  cache_.clear();
 }
 
 #endif // SESTET_TRACE_ANALYSER_SIMU_ENGINE_H_

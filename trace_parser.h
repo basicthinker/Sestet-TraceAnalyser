@@ -36,6 +36,7 @@ class TraceParser {
   public:
     TraceParser() {}
     TraceParser(const char *file_name) { this->Open(file_name); }
+    ~TraceParser() { this->Close(); }
     bool Open(const char *file_name);
     bool Next(DataOperation &op, DataItem &item);
     void Close() { input_.close(); }
