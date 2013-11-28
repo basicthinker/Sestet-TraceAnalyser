@@ -13,8 +13,6 @@
 #include "data_item.h"
 #include "simu_state.h"
 
-using namespace std;
-
 typedef std::pair<unsigned long, double> PageTag;
 
 class SimuEngine {
@@ -31,8 +29,8 @@ class SimuEngine {
 };
 
 // Implementations
-
-using namespace std;
+using std::cerr;
+using std::endl;
 
 inline void SimuEngine::Register(SimuState &state) {
   states_.push_back(&state);
@@ -41,7 +39,7 @@ inline void SimuEngine::Register(SimuState &state) {
 void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
   PageTag tag(item.di_ino, item.di_index);
   bool hit = (cache_.find(tag) != cache_.end());
-  list<SimuState *>::iterator state_i;
+  std::list<SimuState *>::iterator state_i;
 
   switch (op) {
   case kDataRead:
@@ -68,7 +66,7 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
       break;
     }
     if (to_fsync_) {
-      for (set<PageTag>::iterator tag_i = cache_.begin();
+      for (std::set<PageTag>::iterator tag_i = cache_.begin();
           tag_i != cache_.end(); ) {
         if (tag_i->first == item.di_ino) {
           cache_.erase(tag_i++);
