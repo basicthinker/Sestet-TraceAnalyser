@@ -25,17 +25,17 @@ int main(int argc, const char *argv[]) {
 
   Ext4Simulator ext4simu(in_file);
   AdaSimulator ada_simu(in_file);
-  OCurve ext4curve, idle_curve;
+  OCurve ext4curve, ideal_curve;
 
   ext4simu.engine().Register(ext4curve);
-  ada_simu.engine().Register(idle_curve);
+  ada_simu.engine().Register(ideal_curve);
 
   ext4simu.Run();
   ada_simu.Run();
 
   list<OPoint>::const_iterator ei = ext4curve.points().begin();
-  list<OPoint>::const_iterator ii = idle_curve.points().begin();
-  for (; ei != ext4curve.points().end() && ii != idle_curve.points().end();
+  list<OPoint>::const_iterator ii = ideal_curve.points().begin();
+  for (; ei != ext4curve.points().end() && ii != ideal_curve.points().end();
       ++ei, ++ii) {
     if (ei->p_time != ii->p_time || ei->p_stale != ii->p_stale) {
       cerr << "Error: mismatch of time and staleness." << endl;
@@ -45,10 +45,10 @@ int main(int argc, const char *argv[]) {
         << ei->p_oratio << "\t" << ii->p_oratio << endl;
   }
 
-  if (ei != ext4curve.points().end() || ii != idle_curve.points().end()) {
+  if (ei != ext4curve.points().end() || ii != ideal_curve.points().end()) {
     cerr << "Error: mismatch of point numbers: ext4 curve = "
-        << ext4curve.points().size() << ", idle curve = "
-        << idle_curve.points().size() << endl;
+        << ext4curve.points().size() << ", ideal curve = "
+        << ideal_curve.points().size() << endl;
   }
 
   out_stream.close();
