@@ -65,6 +65,10 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
           " fsync item has non-zero index." << endl;
       break;
     }
+    for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
+      (*state_i)->OnFsync(item);
+    }
+
     if (to_fsync_) {
       for (std::set<PageTag>::iterator tag_i = cache_.begin();
           tag_i != cache_.end(); ) {

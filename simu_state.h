@@ -15,6 +15,7 @@ class SimuState {
     virtual void OnWrite(const DataItem &item, bool hit) { }
     virtual void OnEvict(const DataItem &item, bool hit) { }
     virtual void OnFlush(const DataItem &item) { }
+    virtual void OnFsync(const DataItem &item) { }
 };
 
 #endif // SESTET_TRACE_ANALYSER_SIMU_STATE_H_

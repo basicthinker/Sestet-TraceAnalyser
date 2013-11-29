@@ -4,6 +4,7 @@
 // Jinglei Ren <jinglei.ren@stanzax.org>
 // Nov. 25, 2013
 
+#include <cerrno>
 #include "data_item.h"
 #include "simulator.h"
 
@@ -93,5 +94,7 @@ int main(int argc, const char *argv[]) {
   if (!ext4num.Check() || !ada_num.Check()) {
     cerr << "Warning: " << file << " final integrity check failed!" << endl;
   }
+
+  return 0;
 }
 
