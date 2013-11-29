@@ -5,6 +5,7 @@
 // Nov. 28, 2013
 
 #include <cerrno>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include "data_item.h"
@@ -24,7 +25,8 @@ class Fsyncs : public SimuState {
     }
 
     void OnFsync(const DataItem &item) {
-      output_ << item.di_time << "\t" << stale_ << "\t" << 50 << std::endl;
+      output_ << item.di_time << "\t" << (double)stale_ / pow(2, 20) << "\t"
+          << 50 << std::endl;
     }
 
   private:
