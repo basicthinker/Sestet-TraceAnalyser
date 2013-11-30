@@ -5,7 +5,6 @@
 // Nov. 28, 2013
 
 #include <cerrno>
-#include <cmath>
 #include <list>
 #include <iostream>
 #include <fstream>
@@ -42,7 +41,7 @@ int main(int argc, const char *argv[]) {
       cerr << "Error: mismatch of time and staleness." << endl;
       return -EPROTO;
     }
-    out_stream << ei->p_time << "\t" << (double)ei->p_stale / pow(2, 20) << "\t"
+    out_stream << ei->p_time << "\t" << (double)ei->p_stale / 1024 << "\t"
         << ei->p_oratio * 100 << "\t" << ii->p_oratio * 100 << endl;
   }
 

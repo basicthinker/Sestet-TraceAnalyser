@@ -17,24 +17,26 @@
 
 struct OPoint {
   double p_time;
-  unsigned long p_stale;
-  double p_oratio;
+  unsigned long p_stale; // KB
+  double p_oratio; // 0~1
 };
 
 class OCurve : public SimuState {
   public:
     OCurve() : stale_(0), overwritten_(0) { }
     const std::list<OPoint> &points() const { return points_; }
+    unsigned long staleness() const { return stale_; }
 
-    void OnWrite(const DataItem &item, bool hit) {
+    virtual void OnWrite(const DataItem &item, bool hit) {
       stale_ += PAGE_SIZE;
       if (hit) overwritten_ += PAGE_SIZE;
 
-      OPoint p = { item.di_time, stale_, (double)overwritten_ / stale_ };
+      OPoint p = { item.di_time, (double)stale_ / 1024, // in KBs
+          (double)overwritten_ / stale_ };
       points_.push_back(p);
     }
 
-    void OnEvict(const DataItem &item, bool hit) {
+    virtual void OnEvict(const DataItem &item, bool hit) {
       if (hit) {
         overwritten_ += PAGE_SIZE;
         points_.back().p_oratio = (double)overwritten_ / stale_;
