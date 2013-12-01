@@ -17,36 +17,15 @@ gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
 
 class AdaCurve : public OCurve {
   public:
-    AdaCurve(const int history_len, const double threshold,
+    AdaCurve(const int history_len, const double threshold, const int min_stale,
         SimuEngine &engine) :
         len_(history_len), x_(history_len), y_(history_len), index_(0),
+        tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
         threshold_(threshold), engine_(engine) { }
     const std::list<OPoint> &tran_points() const { return tran_points_; }
 
-    void OnWrite(const DataItem &item, bool hit) {
-      OCurve::OnWrite(item ,hit);
-
-      tran_stale_ += PAGE_SIZE;
-      if (hit) tran_overwritten_ += PAGE_SIZE;
-      x_[index_] = (double)tran_stale_ / 1024;
-      y_[index_] = (double)tran_overwritten_ / tran_stale_;
-
-      OPoint p = { item.di_time, staleness() / 1024, y_[index_] };
-      tran_points_.push_back(p);
-
-      if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear();
-      inc_index();
-    }
-
-    void OnEvict(const DataItem &item, bool hit) {
-      OCurve::OnEvict(item, hit);
-      if (hit) {
-        tran_overwritten_ += PAGE_SIZE;
-        // Instant modification may help to smooth curve.
-        y_[last_index()] = (double)tran_overwritten_ / tran_stale_;
-        tran_points_.back().p_oratio = y_[last_index()];
-      }
-    }
+    void OnWrite(const DataItem &item, bool hit);
+    void OnEvict(const DataItem &item, bool hit);
 
   private:
     unsigned int last_index() const {
@@ -54,6 +33,7 @@ class AdaCurve : public OCurve {
     }
     void inc_index() { index_ == len_ ? index_ = 0 : ++index_; }
     void Clear() {
+      if (tran_stale_ < min_stale_) return;
       tran_stale_ = 0;
       tran_overwritten_ = 0;
       engine_.Clear();
@@ -66,10 +46,36 @@ class AdaCurve : public OCurve {
 
     unsigned long tran_stale_;
     unsigned long tran_overwritten_;
+    const int min_stale_;
     const double threshold_;
     SimuEngine &engine_;
     std::list<OPoint> tran_points_;
 };
+
+void AdaCurve::OnWrite(const DataItem &item, bool hit) {
+  OCurve::OnWrite(item ,hit);
+
+  tran_stale_ += 1;
+  if (hit) tran_overwritten_ += 1;
+  x_[index_] = (double)tran_stale_;
+  y_[index_] = (double)tran_overwritten_ / tran_stale_ * 100;
+
+  OPoint p(item.di_time, staleness(), (double)tran_overwritten_ / tran_stale_);
+  tran_points_.push_back(p);
+
+  if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear();
+  inc_index();
+}
+
+void AdaCurve::OnEvict(const DataItem &item, bool hit) {
+  OCurve::OnEvict(item, hit);
+  if (hit) {
+    tran_overwritten_ += 1;
+    // Instant modification may help to smooth curve.
+    y_[last_index()] = (double)tran_overwritten_ / tran_stale_ * 100;
+    tran_points_.back().set_ratio((double)tran_overwritten_ / tran_stale_);
+  }
+}
 
 // Ported from GSL for simulation
 double

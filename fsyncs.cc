@@ -5,15 +5,14 @@
 // Nov. 28, 2013
 
 #include <cerrno>
-#include <cmath>
 #include <iostream>
 #include <fstream>
 #include "data_item.h"
 #include "simu_state.h"
 #include "simulator.h"
 
-// Kernel config
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 4096 // kernel config
+#define MB (1024 * 1024) // bytes
 
 class Fsyncs : public SimuState {
   public:
@@ -21,11 +20,12 @@ class Fsyncs : public SimuState {
     ~Fsyncs() { output_.close(); }
 
     void OnWrite(const DataItem &item, bool hit) {
-      stale_ += PAGE_SIZE;
+      stale_ += 1;
     }
 
     void OnFsync(const DataItem &item) {
-      output_ << item.di_time << "\t" << (double)stale_ / pow(2, 20) << "\t"
+      output_ << item.di_time << "\t"
+          << (double)stale_ * PAGE_SIZE / MB << "\t"
           << 50 << std::endl;
     }
 

@@ -30,8 +30,6 @@ struct te_page {
   uint32_t te_pgi;
 };
 
-#define PAGE_SIZE 4096
-
 class TraceParser {
   public:
     TraceParser() {}

@@ -9,16 +9,34 @@
 
 #include "data_item.h"
 #include "simu_state.h"
-
+#include "simu_engine.h"
 #include <list>
 
-// Kernel config
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 4096 // kernel config
+#define MB (1024 * 1024) // bytes
 
-struct OPoint {
-  double p_time;
-  unsigned long p_stale; // KB
-  double p_oratio; // 0~1
+class OPoint {
+  public:
+    OPoint(double time, unsigned long blocks, double ratio) {
+      set_time(time);
+      set_staleness(blocks);
+      set_ratio(ratio);
+    }
+    void set_time(double time) { time_ = time; }
+    double time() const { return time_; }
+
+    void set_staleness(unsigned long blocks) { stale_blocks_ = blocks; }
+    double staleness_mb() const {
+      return (double)stale_blocks_ * PAGE_SIZE / MB;
+    }
+    
+    void set_ratio(double ratio) { ratio_ = ratio; }
+    double percent() const { return ratio_ * 100; }
+
+  private:
+    double time_;
+    unsigned long stale_blocks_;
+    double ratio_; // 0~1
 };
 
 class OCurve : public SimuState {
@@ -28,18 +46,17 @@ class OCurve : public SimuState {
     unsigned long staleness() const { return stale_; }
 
     virtual void OnWrite(const DataItem &item, bool hit) {
-      stale_ += PAGE_SIZE;
-      if (hit) overwritten_ += PAGE_SIZE;
+      stale_ += 1;
+      if (hit) overwritten_ += 1;
 
-      OPoint p = { item.di_time, (double)stale_ / 1024, // in KBs
-          (double)overwritten_ / stale_ };
+      OPoint p(item.di_time, stale_, (double)overwritten_ / stale_);
       points_.push_back(p);
     }
 
     virtual void OnEvict(const DataItem &item, bool hit) {
       if (hit) {
-        overwritten_ += PAGE_SIZE;
-        points_.back().p_oratio = (double)overwritten_ / stale_;
+        overwritten_ += 1;
+        points_.back().set_ratio((double)overwritten_ / stale_);
       }
     }
 

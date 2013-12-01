@@ -37,12 +37,12 @@ int main(int argc, const char *argv[]) {
   list<OPoint>::const_iterator ii = ideal_curve.points().begin();
   for (; ei != ext4curve.points().end() && ii != ideal_curve.points().end();
       ++ei, ++ii) {
-    if (ei->p_time != ii->p_time || ei->p_stale != ii->p_stale) {
+    if (ei->time() != ii->time() || ei->staleness_mb() != ii->staleness_mb()) {
       cerr << "Error: mismatch of time and staleness." << endl;
       return -EPROTO;
     }
-    out_stream << ei->p_time << "\t" << (double)ei->p_stale / 1024 << "\t"
-        << ei->p_oratio * 100 << "\t" << ii->p_oratio * 100 << endl;
+    out_stream << ei->time() << "\t" << ei->staleness_mb() << "\t"
+        << ei->percent() << "\t" << ii->percent() << endl;
   }
 
   if (ei != ext4curve.points().end() || ii != ideal_curve.points().end()) {

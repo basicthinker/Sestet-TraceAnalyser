@@ -1,20 +1,28 @@
 #!/bin/bash
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 [TRACE DIR] [ADA LEN = 16] [ADA THRESHOLD = -0.1]"
+  echo "Usage: $0 [TRACE DIR] [MIN STALE=128] " \
+    "[ADA THRESHOLD = -0.01] [ADA LEN=16]"
   exit 1
 fi
 
 trace_dir=$1
 if [ $# -ge 2 ]; then
-  ada_len=$2
+  min_stale=$2
 else
-  ada_len=16
+  min_stale='128'
 fi
-if [ $# -eq 3 ]; then
+
+if [ $# -ge 3 ]; then
   ada_threshold=$3
 else
-  ada_threshold='-0.1'
+  ada_threshold='-0.01'
+fi
+
+if [ $# -ge 4 ]; then
+  ada_len=$4
+else
+  ada_len='16'
 fi
 
 for trace_file in `ls $trace_dir/*-io-*.trace`
@@ -30,7 +38,7 @@ do
   if [ ! -f $fsyncs_txt ]; then
     ./fsyncs.out $trace_file $fsyncs_txt
   fi
-  ./ada_curve.out $trace_file $ada_txt $ada_len $ada_threshold
+  ./ada_curves.out $trace_file $ada_txt $min_stale $ada_threshold $ada_len
 
   gnuplot -e "OUTPUT_PLT='$eps_file'" -e "TRACE_TXT='$trace_txt'" -e "ADA_TXT='$ada_txt'" -e "FSYNCS_TXT='$fsyncs_txt'" opt-ratio.plt
   if [ $? != 0 ]; then
