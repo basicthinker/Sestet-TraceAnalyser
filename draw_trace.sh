@@ -2,7 +2,7 @@
 
 if [ $# -lt 1 ]; then
   echo "Usage: $0 [TRACE DIR] [MIN STALE=128] " \
-    "[ADA THRESHOLD = -0.01] [ADA LEN=16]"
+    "[ADA THRESHOLD = -0.02] [ADA LEN=16]"
   exit 1
 fi
 
@@ -16,7 +16,7 @@ fi
 if [ $# -ge 3 ]; then
   ada_threshold=$3
 else
-  ada_threshold='-0.01'
+  ada_threshold='-0.02'
 fi
 
 if [ $# -ge 4 ]; then
@@ -39,10 +39,11 @@ do
     ./fsyncs.out $trace_file $fsyncs_txt
   fi
   ./ada_curves.out $trace_file $ada_txt $min_stale $ada_threshold $ada_len
-
-  gnuplot -e "OUTPUT_PLT='$eps_file'" -e "TRACE_TXT='$trace_txt'" -e "ADA_TXT='$ada_txt'" -e "FSYNCS_TXT='$fsyncs_txt'" opt-ratio.plt
-  if [ $? != 0 ]; then
-    echo "Error: failed to draw $trace_file"
+  if [ ! -f $eps_file ]; then
+    gnuplot -e "OUTPUT_PLT='$eps_file'; TRACE_TXT='$trace_txt'; ADA_TXT='$ada_txt'; FSYNCS_TXT='$fsyncs_txt'" opt-ratio.plt
+    if [ $? != 0 ]; then
+      echo "Error: failed to draw $trace_file"
+    fi
   fi
 done
 
