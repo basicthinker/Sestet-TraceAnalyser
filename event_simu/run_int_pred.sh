@@ -17,13 +17,13 @@ do
   stat_file=${ev_file%'.trace'}'.stat'
 
   python filter-ev-trace.py $ev_file > $int_file
-  ./simu_int_pred.out $int_file $thre_multi > $stat_file
+  ./simu_int_pred.out $int_file $thre_multi > $stat_file 2>/dev/null
   ./fsm_int_pred.out $int_file >> $stat_file
 
   tmp=(`cat $stat_file`)
   num_conf=`expr $num_conf + ${tmp[1]}`
   num_pred=`expr $num_pred + ${tmp[2]}`
-  total_len=`echo $total_len + ${tmp[3]} | bc -l`
+  total_len=`echo $total_len + ${tmp[4]} | bc -l`
 done
 
 avg_len=`echo $total_len / $num_pred | bc -l`

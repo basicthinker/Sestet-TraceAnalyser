@@ -52,8 +52,10 @@ static inline void print_state(enum state ns, double timer) {
     struct adafs_interval_history *fh = &(ts)->int_hist; \
     (ts)->timer = fh_state(fh) / fh_len(fh); })
 
-#define threshold(ts_vec) \
-    ((ts_vec)[ST_SHORT_INT].timer * THRE_MULTI)
+static inline double threshold(struct adafs_touch_state ts_vec[]) {
+  double timer = set_timer(&ts_vec[ST_SHORT_INT]);
+  return timer * THRE_MULTI;
+}
 
 int num_conflicts = 0;
 int num_pred=0;
@@ -84,7 +86,6 @@ double transfer(struct adafs_touch_state ts_vec[],
     if (ev == EV_USER) {
       check_conflict(ts_vec, next_int);
       update_hist_int(&ts_vec[ST_SHORT_INT], next_int);
-      set_timer(&ts_vec[ST_SHORT_INT]);
       return threshold(ts_vec);
     } else if (ev == EV_TIMER) {
       *s = ST_LONG_INT;
@@ -97,7 +98,6 @@ double transfer(struct adafs_touch_state ts_vec[],
       if (next_int <= threshold(ts_vec)) {
         *s = ST_SHORT_INT;
         update_hist_int(&ts_vec[ST_SHORT_INT], next_int);
-        set_timer(&ts_vec[ST_SHORT_INT]);
         return threshold(ts_vec);
       } else {
         *s = ST_SHORTER;
@@ -114,7 +114,6 @@ double transfer(struct adafs_touch_state ts_vec[],
       check_conflict(ts_vec, next_int);
       *s = ST_SHORT_INT;
       update_hist_int(&ts_vec[ST_SHORT_INT], next_int);
-      set_timer(&ts_vec[ST_SHORT_INT]);
       return threshold(ts_vec);
     } else if (ev == EV_TIMER) {
       *s = ST_LONG_INT;
@@ -152,9 +151,9 @@ int main(int argc, char *argv[]) {
   update_hist_int(&ts_vec[ST_LONG_INT], INIT_LONG);
 
   s = ST_SHORT_INT;
-  timer = THRE_MULTI * INIT_SHORT;
+  timer = threshold(ts_vec);
   while (scanf("%lf", &next_int) == 1) {
-    fprintf(stderr, "%f\t", next_int);
+    fprintf(stderr, "%f\n", next_int);
     while (next_int > timer) {
       next_int -= timer;
       print_event(EV_TIMER, timer, s);
@@ -167,8 +166,9 @@ int main(int argc, char *argv[]) {
     if (timer < 0) return -EINVAL;
     print_state(s, timer);
   }
-  printf("%s:\t%d\t%d\t%f\t%f\n", argv[1],
-      num_conflicts, num_pred, total_len, total_len/num_pred);
+  printf("%s:\t%d\t%d\t%f\t%f\t%f\n", argv[1],
+      num_conflicts, num_pred, (double)num_conflicts / num_pred,
+      total_len, total_len/num_pred);
   return 0;
 }
 
