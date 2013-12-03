@@ -22,7 +22,7 @@ enum state {
 
 char *state_name[] = {
     [ST_SHORT_INT] = "ST_SHORT_INT",
-    [ST_LONG_INT] = "ST_DIS",
+    [ST_LONG_INT] = "ST_LONG_INT",
     [ST_SHORTER] = "ST_SHORTER",
     [ST_LONGER] = "ST_LONGER" };
 
