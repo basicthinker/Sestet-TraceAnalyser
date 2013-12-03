@@ -37,8 +37,8 @@ char *event_name[] = {
 
 #define min_time(a, b) ((a) < (b) ? (a) : (b))
 
-static inline void print_event(enum event ev, double in, enum state s) {
-  fprintf(stderr, "%s input=%f: %s => ", event_name[ev], in, state_name[s]);
+static inline void print_event(enum event ev, double past, enum state s) {
+  fprintf(stderr, "%s on %s=%f => ", state_name[s], event_name[ev], past);
 }
 
 static inline void print_state(enum state ns, double timer) {
@@ -154,9 +154,10 @@ int main(int argc, char *argv[]) {
   s = ST_SHORT_INT;
   timer = THRE_MULTI * INIT_SHORT;
   while (scanf("%lf", &next_int) == 1) {
+    fprintf(stderr, "%f\t", next_int);
     while (next_int > timer) {
-      print_event(EV_TIMER, next_int, s);
       next_int -= timer;
+      print_event(EV_TIMER, timer, s);
       timer = transfer(ts_vec, &s, EV_TIMER, timer);
       if (timer < 0) return -EINVAL;
       print_state(s, timer);
