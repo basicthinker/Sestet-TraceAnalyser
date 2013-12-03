@@ -9,8 +9,9 @@
 #define LEN_BITS 2
 #define TIME_WAIT (~0UL)
 
-double THR_INT = 1.0;
-double THR_M = 3.0;
+#define INIT_SHORT 0.2
+#define INIT_LONG 3.0
+double THRE_MULTI = 3;
 
 enum state {
   ST_SHORT_INT = 0,
@@ -45,14 +46,14 @@ static inline void print_state(enum state ns, double timer) {
 }
 
 #define update_hist_int(ts, next_int) \
-    (fh_update_interval(&(ts)->int_hist, &(next_int)))
+    (fh_update_interval(&(ts)->int_hist, (next_int)))
 
 #define set_timer(ts) ({ \
     struct adafs_interval_history *fh = &(ts)->int_hist; \
-    (ts)->timer = fh->seq ? fh_state(fh) / fh_len(fh) : THR_INT; })
+    (ts)->timer = fh_state(fh) / fh_len(fh); })
 
 #define threshold(ts_vec) \
-    ((ts_vec)[ST_SHORT_INT].int_hist.seq ? (ts_vec)[ST_SHORT_INT].timer * THR_M : THR_INT)
+    ((ts_vec)[ST_SHORT_INT].timer * THRE_MULTI)
 
 int num_conflicts = 0;
 int num_pred=0;
@@ -138,18 +139,20 @@ int main(int argc, char *argv[]) {
   double next_int;
   double timer;
 
-  if (argc != 4) {
-    fprintf(stderr, "Usage: %s EventLog MultiThreshold IntervalThreshold\n",
+  if (argc != 3) {
+    fprintf(stderr, "Usage: %s [EVENT TRACE] [MULTIPLE]\n",
         argv[0]);
     return -1;
   }
   
   freopen(argv[1], "r", stdin);
-  THR_M = atof(argv[2]);
-  THR_INT = atof(argv[3]);
+  THRE_MULTI = atof(argv[2]);
+
+  update_hist_int(&ts_vec[ST_SHORT_INT], INIT_SHORT);
+  update_hist_int(&ts_vec[ST_LONG_INT], INIT_LONG);
 
   s = ST_SHORT_INT;
-  timer = THR_INT;
+  timer = THRE_MULTI * INIT_SHORT;
   while (scanf("%lf", &next_int) == 1) {
     while (next_int > timer) {
       print_event(EV_TIMER, next_int, s);

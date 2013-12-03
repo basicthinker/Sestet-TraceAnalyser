@@ -30,7 +30,7 @@ struct adafs_##name##_history { \
 #define fh_head_item(fh)	((fh)->array[fh_end(fh)])
 
 #define fh_add(fh, v) { \
-		fh_head_item(fh) = *(v); \
+		fh_head_item(fh) = (v); \
 		++(fh)->seq; }
 
 // Used for alignment for a certain number of fh_add()
@@ -74,17 +74,17 @@ static inline double inc_fit_linear(adafs_point *op, adafs_point *np,
 
 ADAFS_CREATE_HISTORY_TYPE(curve, adafs_point, adafs_line_state);
 
-#define fh_update_curve(fh, v) { \
-		fh_state(fh).slope = inc_fit_linear(&fh_head_item(fh), v, \
+#define fh_update_curve(fh, vp) { \
+		fh_state(fh).slope = inc_fit_linear(&fh_head_item(fh), vp, \
 				&fh_state(fh), (fh)->mask + 1); \
-		fh_add(fh, v); }
+		fh_add(fh, (*vp)); }
 
 /* For state machine to store latest intervals */
 
 ADAFS_CREATE_HISTORY_TYPE(interval, double, double);
 
 #define fh_update_interval(fh, v) { \
-		(fh)->state += *(v) - fh_head_item(fh); \
+		(fh)->state += (v) - fh_head_item(fh); \
 		fh_add(fh, v); }
 
 struct adafs_touch_state {
