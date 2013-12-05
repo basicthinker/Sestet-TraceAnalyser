@@ -65,7 +65,7 @@ static void try_pred(struct adafs_interval_history *int_hist) {
 static void print_stat(char *filename) {
   int i;
   for (i = 0; i < NUM_TESTS; ++i) {
-    printf("%s:\t%d\t%d\t%f\t%f\t%f\n", filename,
+    printf("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\n", filename, "LAST", i,
         num_confl[i], num_pred[i], (double)num_confl[i] / num_pred[i],
         total_len[i], total_len[i]/num_pred[i]);
   }

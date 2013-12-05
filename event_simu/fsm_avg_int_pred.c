@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
     if (timer < 0) return -EINVAL;
     print_state(s, timer);
   }
-  printf("%s:\t%d\t%d\t%f\t%f\t%f\n", argv[1],
+  printf("%s\t%s\t%f\t%d\t%d\t%f\t%f\t%f\n", argv[1], "FSM-AVG", THRE_MULTI,
       num_conflicts, num_pred, (double)num_conflicts / num_pred,
       total_len, total_len/num_pred);
   return 0;
