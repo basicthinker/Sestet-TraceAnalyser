@@ -18,8 +18,10 @@ def parse_ada_file(path):
     time = float(lines[-1][0])
     ratio = float(lines[-1][3])
     if time - begin_time > 0.01:
-        int_list.append(time - begin_time) 
-    return int_list
+        int_list.append(time - begin_time)
+
+    arr = numpy.array(int_list)
+    return (int_list, numpy.mean(arr), numpy.std(arr))
 
 def parse_fsync_file(path):
     int_list = []
@@ -29,12 +31,13 @@ def parse_fsync_file(path):
         time = float(line[0])
         int_list.append(time - begin_time)
         begin_time = time
-    return int_list
+    arr = numpy.array(int_list)
+    return (int_list, numpy.mean(arr), numpy.std(arr))
     
 # Main
 
-if len(sys.argv) != 2:
-    print "Usage: %s [TRACE DIR]" % sys.argv[0]
+if len(sys.argv) < 2:
+    print "Usage: %s DIR [APP]..." % sys.argv[0]
     sys.exit(-1)
 dir_name = sys.argv[1]
 
@@ -45,12 +48,15 @@ for filename in files:
     app = filename.split('-')[0]
     ada_path = os.path.join(dir_name, filename).replace(".trace", ".ada.txt")
     fsync_path = os.path.join(dir_name, filename).replace(".trace", ".fsyncs") 
-    ada_list = parse_ada_file(ada_path)
-    fsync_list = parse_fsync_file(fsync_path)
+    ada_ret = parse_ada_file(ada_path)
+    fsync_ret = parse_fsync_file(fsync_path)
     if not data_set.has_key(app):
         data_set[app] = { "ada": [], "fsync": [] }
-    data_set[app]["ada"] += ada_list
-    data_set[app]["fsync"] += fsync_list
+    data_set[app]["ada"] += ada_ret[0]
+    data_set[app]["fsync"] += fsync_ret[0]
+    if app in sys.argv:
+        print "%s\t%f\t%f\t%f\t%f" % (ada_path, fsync_ret[1], fsync_ret[2],
+                ada_ret[1], ada_ret[2])
 
 all_lists = { "ada": [], "fsync": [] }
 for app in data_set.keys():
