@@ -39,9 +39,8 @@ do
     ./fsyncs.out $trace_file $fsyncs_txt
   fi
   ./ada_curves.out $trace_file $ada_txt $min_stale $ada_threshold $ada_len
-  gnuplot -e "OUTPUT_PLT='$eps_file'; TRACE_TXT='$trace_txt'; ADA_TXT='$ada_txt'; FSYNCS_TXT='$fsyncs_txt'" opt-ratio.plt
   if [ $? != 0 ]; then
-    echo "Error: failed to draw $trace_file"
+    echo "Error: failed to proc $trace_file"
   fi
 done
 
