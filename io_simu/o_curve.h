@@ -1,7 +1,7 @@
 // o_curve.h
 // Sestet-TraceAnalyser
 //
-// Jinglei Ren <jinglei.ren@stanzax.org>
+// Jinglei Ren <jinglei@ren.systems>
 // Nov. 28, 2013
 
 #ifndef SESTET_TRACE_ANALYSER_O_CURVE_H_

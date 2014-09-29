@@ -1,7 +1,7 @@
 // io_num.cc
 // Sestet-TraceAnalyser
 //
-// Jinglei Ren <jinglei.ren@stanzax.org>
+// Jinglei Ren <jinglei@ren.systems>
 // Nov. 25, 2013
 
 #include <cerrno>

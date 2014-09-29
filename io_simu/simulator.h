@@ -1,7 +1,7 @@
 // simulator.h
 // Sestet-TraceAnalyser
 //
-// Jinglei Ren <jinglei.ren@stanzax.org>
+// Jinglei Ren <jinglei@ren.systems>
 // Nov. 27, 2013
 
 #ifndef SESTET_TRACE_ANALYSER_SIMULATOR_H_

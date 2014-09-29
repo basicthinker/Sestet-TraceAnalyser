@@ -1,7 +1,7 @@
 // simu_state.h
 // Sestet-TraceAnayliser
 //
-// Jinglei Ren <jinglei.ren@stanzax.org>
+// Jinglei Ren <jinglei@ren.systems>
 // Nov. 26, 2013
 
 #ifndef SESTET_TRACE_ANALYSER_SIMU_STATE_H_

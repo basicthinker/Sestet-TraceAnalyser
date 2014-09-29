@@ -1,7 +1,7 @@
 // ada_curve.h
 // Sestet-TraceAnalyser
 //
-// Jinglei Ren <jinglei.ren@stanzax.org>
+// Jinglei Ren <jinglei@ren.systems>
 // Nov. 29, 2013
 
 #ifndef SESTET_TRACE_ANALYSER_ADA_CURVE_H_

@@ -1,7 +1,7 @@
 // ada_curves.cc
 // Sestet-TraceAnalyser
 //
-// Jinglei Ren <jinglei.ren@stanzax.org>
+// Jinglei Ren <jinglei@ren.systems>
 // Nov. 29, 2013
 
 #include <cerrno>

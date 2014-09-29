@@ -1,7 +1,7 @@
 // data_item.h
 // Sestet-TraceAnalyser
 //
-// Jinglei Ren <jinglei.ren@gmail.com>
+// Jinglei Ren <jinglei@ren.systems>
 // Nov. 26, 2013
 
 #ifndef SESTET_TRACE_ANALYSER_DATA_ITEM_H_

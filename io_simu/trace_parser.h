@@ -1,7 +1,7 @@
 // trace_parser.h
 // Sestet-TraceAnalyser
 //
-// Jinglei Ren <jinglei.ren@gmail.com>
+// Jinglei Ren <jinglei@ren.systems>
 // Nov. 26, 2013
 
 #ifndef SESTET_TRACE_ANALYSER_PARSER_H_
