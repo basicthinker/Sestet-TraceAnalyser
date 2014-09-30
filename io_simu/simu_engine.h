@@ -14,8 +14,6 @@
 #include "data_item.h"
 #include "simu_state.h"
 
-typedef std::pair<unsigned long, double> PageTag;
-
 class SimuEngine {
   public:
     void Register(SimuState &state);
@@ -25,7 +23,7 @@ class SimuEngine {
     void set_to_fsync(bool to_fsync) { to_fsync_ = to_fsync; } 
  private:
     bool to_fsync_;
-    std::set<PageTag> cache_; // simulates page cache
+    std::set<DataTag> cache_; // simulates page cache
     std::list<SimuState *> states_;
 };
 
@@ -38,7 +36,7 @@ inline void SimuEngine::Register(SimuState &state) {
 }
 
 void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
-  PageTag tag(item.di_ino, item.di_index);
+  DataTag tag(item.di_file, item.di_index);
   bool hit = (cache_.find(tag) != cache_.end());
   std::list<SimuState *>::iterator state_i;
 
@@ -71,9 +69,9 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
     }
 
     if (to_fsync_) {
-      for (std::set<PageTag>::iterator tag_i = cache_.begin();
+      for (std::set<DataTag>::iterator tag_i = cache_.begin();
           tag_i != cache_.end(); ) {
-        if (tag_i->first == item.di_ino) {
+        if (tag_i->first == item.di_file) {
           DataItem flushed = { -1, tag_i->first, tag_i->second };
           cache_.erase(tag_i++);
           for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
@@ -89,7 +87,7 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
 }
 
 void SimuEngine::Clear() {
-  for (std::set<PageTag>::iterator i = cache_.begin();
+  for (std::set<DataTag>::iterator i = cache_.begin();
       i != cache_.end(); ++i) {
     DataItem flushed = { -1, i->first, i->second };
     for (std::list<SimuState *>::iterator j = states_.begin();

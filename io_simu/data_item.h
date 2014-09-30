@@ -9,9 +9,11 @@
 
 struct DataItem {
   double di_time;
-  unsigned long di_ino;
+  unsigned long di_file;
   unsigned long di_index;
 };
+
+typedef std::pair<unsigned long, unsigned long> DataTag;
 
 enum DataOperation {
   kDataRead = 'r',
@@ -21,5 +23,3 @@ enum DataOperation {
 };
 
 #endif // SESTET_TRACE_ANALYSER_DATA_ITEM_H_
-
-

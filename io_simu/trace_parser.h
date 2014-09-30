@@ -57,7 +57,7 @@ bool TraceParser::Next(DataOperation &op, DataItem &item) {
     return false;
   }
   item.di_time = tv_float(tv);
-  item.di_ino = page.te_ino;
+  item.di_file = page.te_ino;
   item.di_index = page.te_pgi;
   op = (DataOperation)page.te_op;
   return true;
