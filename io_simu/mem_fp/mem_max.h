@@ -15,6 +15,7 @@ class MemoryMax : public SimuState {
   MemoryMax() : duration_(0) { }
   void OnRead(const DataItem &item, bool hit);
   void OnWrite(const DataItem &item, bool hit);
+  void Clear() { cache_.clear(); }
   unsigned long GetSize() const { return cache_.size(); }
   double duration() const { return duration_; }
 

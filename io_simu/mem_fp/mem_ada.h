@@ -10,6 +10,7 @@
 #include <vector>
 #include "../simu_state.h"
 #include "../simu_engine.h"
+#include "mem_max.h"
 #include "integral_avg.h"
 
 // Ported from GSL for simulation
@@ -17,10 +18,10 @@ double
 gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
                 const int n);
 
-class MemoryAdaptive : public SimuState {
+class MemoryAdaptive : public MemoryMax {
  public:
-  MemoryAdaptive(const int history_len, const double threshold,
-      const int min_stale, SimuEngine &engine) :
+  MemoryAdaptive(int history_len, double threshold, int min_stale,
+      SimuEngine &engine) :
 
       len_(history_len), x_(history_len), y_(history_len), index_(0),
       tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
@@ -60,6 +61,7 @@ class MemoryAdaptive : public SimuState {
 
 void MemoryAdaptive::Clear() {
   if (tran_stale_ < min_stale_) return;
+  MemoryMax::Clear();
   tran_stale_ = 0;
   tran_overwritten_ = 0;
   engine_.Clear();
@@ -76,10 +78,12 @@ void MemoryAdaptive::AddToAverage(double time, double blocks) {
 }
 
 void MemoryAdaptive::OnRead(const DataItem &item, bool hit) {
-  AddToAverage(item.di_time, engine_.CacheSize());  
+  MemoryMax::OnRead(item, hit);
+  AddToAverage(item.di_time, MemoryMax::GetSize());  
 }
 
 void MemoryAdaptive::OnWrite(const DataItem &item, bool hit) {
+  MemoryMax::OnWrite(item, hit);
   tran_stale_ += 1;
   if (hit) tran_overwritten_ += 1;
   x_[index_] = (double)tran_stale_;
@@ -87,7 +91,7 @@ void MemoryAdaptive::OnWrite(const DataItem &item, bool hit) {
 
   if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear();
   inc_index();
-  AddToAverage(item.di_time, engine_.CacheSize());  
+  AddToAverage(item.di_time, MemoryMax::GetSize());  
 }
 
 void MemoryAdaptive::OnEvict(const DataItem &item, bool hit) {

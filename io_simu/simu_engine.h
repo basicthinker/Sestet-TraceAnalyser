@@ -19,7 +19,6 @@ class SimuEngine {
     void Register(SimuState &state);
     void Input(DataOperation op, const struct DataItem &item);
     void Clear();
-    unsigned long CacheSize() const { return cache_.size(); }
     bool to_fsync() { return to_fsync_; }
     void set_to_fsync(bool to_fsync) { to_fsync_ = to_fsync; } 
  private:
