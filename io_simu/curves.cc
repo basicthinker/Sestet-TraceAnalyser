@@ -11,6 +11,9 @@
 #include "simulator.h"
 #include "o_curve.h"
 
+#define PAGE_SIZE (4096) // kernel config
+#define MB (1024 * 1024) // bytes
+
 using namespace std;
 
 int main(int argc, const char *argv[]) {
@@ -37,11 +40,12 @@ int main(int argc, const char *argv[]) {
   list<OPoint>::const_iterator ii = ideal_curve.points().begin();
   for (; ei != ext4curve.points().end() && ii != ideal_curve.points().end();
       ++ei, ++ii) {
-    if (ei->time() != ii->time() || ei->staleness_mb() != ii->staleness_mb()) {
+    if (ei->time() != ii->time() || ei->stale_blocks() != ii->stale_blocks()) {
       cerr << "Error: mismatch of time and staleness." << endl;
       return -EPROTO;
     }
-    out_stream << ei->time() << "\t" << ei->staleness_mb() << "\t"
+    double mbs = (double)ei->stale_blocks() * PAGE_SIZE / MB;
+    out_stream << ei->time() << "\t" << mbs << "\t"
         << ei->percent() << "\t" << ii->percent() << endl;
   }
 

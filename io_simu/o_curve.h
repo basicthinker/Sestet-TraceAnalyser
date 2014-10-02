@@ -12,9 +12,6 @@
 #include "simu_engine.h"
 #include <list>
 
-#define PAGE_SIZE 4096 // kernel config
-#define MB (1024 * 1024) // bytes
-
 class OPoint {
   public:
     OPoint(double time, unsigned long blocks, double ratio) {
@@ -26,9 +23,7 @@ class OPoint {
     double time() const { return time_; }
 
     void set_staleness(unsigned long blocks) { stale_blocks_ = blocks; }
-    double staleness_mb() const {
-      return (double)stale_blocks_ * PAGE_SIZE / MB;
-    }
+    unsigned long stale_blocks() const { return stale_blocks_; }
     
     void set_ratio(double ratio) { ratio_ = ratio; }
     double percent() const { return ratio_ * 100; }

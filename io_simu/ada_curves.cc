@@ -42,11 +42,12 @@ int main(int argc, const char *argv[]) {
   list<OPoint>::const_iterator ti = ada_curve.tran_points().begin();
   for (; ai != ada_curve.points().end() && ti != ada_curve.tran_points().end();
       ++ai, ++ti) {
-    if (ai->time() != ti->time() || ai->staleness_mb() != ti->staleness_mb()) {
+    if (ai->time() != ti->time() || ai->stale_blocks() != ti->stale_blocks()) {
       cerr << "Error: Ada curves mismatch time and/or staleness." << endl;
       return -EPROTO;
     }
-    out_stream << ai->time() << "\t" << ai->staleness_mb() << "\t"
+    double mbs = (double)ai->stale_blocks() * PAGE_SIZE / MB; 
+    out_stream << ai->time() << "\t" << mbs << "\t"
         << ai->percent() << "\t" << ti->percent() << endl;
   }
 
