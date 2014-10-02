@@ -1,16 +1,16 @@
-// mem_ada.h
+// ada_fp.h
 // Sestet-TraceAnalyser
 //
 // Jinglei Ren <jinglei@ren.systems>
 // Oct. 1, 2014
 
-#ifndef SESTET_TRACE_ANALYSER_MEM_ADA_H_
-#define SESTET_TRACE_ANALYSER_MEM_ADA_H_
+#ifndef SESTET_TRACE_ANALYSER_ADA_FP_H_
+#define SESTET_TRACE_ANALYSER_ADA_FP_H_
 
 #include <vector>
 #include "../simu_state.h"
 #include "../simu_engine.h"
-#include "mem_max.h"
+#include "max_fp.h"
 #include "integral_avg.h"
 
 // Ported from GSL for simulation
@@ -18,9 +18,9 @@ double
 gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
                 const int n);
 
-class MemoryAdaptive : public MemoryMax {
+class AdaptiveFootprint : public MaxFootprint {
  public:
-  MemoryAdaptive(int history_len, double threshold, int min_stale,
+  AdaptiveFootprint(int history_len, double threshold, int min_stale,
       SimuEngine &engine) :
 
       len_(history_len), x_(history_len), y_(history_len), index_(0),
@@ -59,16 +59,16 @@ class MemoryAdaptive : public MemoryMax {
   double last_time_;
 };
 
-void MemoryAdaptive::Clear() {
+void AdaptiveFootprint::Clear() {
   if (tran_stale_ < min_stale_) return;
-  MemoryMax::Clear();
+  MaxFootprint::Clear();
   tran_stale_ = 0;
   tran_overwritten_ = 0;
   engine_.Clear();
   ++num_trans_;
 }
 
-void MemoryAdaptive::AddToAverage(double time, double blocks) {
+void AdaptiveFootprint::AddToAverage(double time, double blocks) {
   if (time < last_time_) {
     time = last_time_; // Times not guaranteed to strictly increase
   }
@@ -77,13 +77,13 @@ void MemoryAdaptive::AddToAverage(double time, double blocks) {
   average_.Input(time, blocks);
 }
 
-void MemoryAdaptive::OnRead(const DataItem &item, bool hit) {
-  MemoryMax::OnRead(item, hit);
-  AddToAverage(item.di_time, MemoryMax::GetSize());  
+void AdaptiveFootprint::OnRead(const DataItem &item, bool hit) {
+  MaxFootprint::OnRead(item, hit);
+  AddToAverage(item.di_time, MaxFootprint::GetSize());
 }
 
-void MemoryAdaptive::OnWrite(const DataItem &item, bool hit) {
-  MemoryMax::OnWrite(item, hit);
+void AdaptiveFootprint::OnWrite(const DataItem &item, bool hit) {
+  MaxFootprint::OnWrite(item, hit);
   tran_stale_ += 1;
   if (hit) tran_overwritten_ += 1;
   x_[index_] = (double)tran_stale_;
@@ -91,10 +91,10 @@ void MemoryAdaptive::OnWrite(const DataItem &item, bool hit) {
 
   if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear();
   inc_index();
-  AddToAverage(item.di_time, MemoryMax::GetSize());  
+  AddToAverage(item.di_time, MaxFootprint::GetSize());
 }
 
-void MemoryAdaptive::OnEvict(const DataItem &item, bool hit) {
+void AdaptiveFootprint::OnEvict(const DataItem &item, bool hit) {
   if (hit) {
     tran_overwritten_ += 1;
     // Instant modification may help to smooth curve.
@@ -131,5 +131,5 @@ gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
   return m_dxdy / m_dx2;
 }
 
-#endif // SESTET_TRACE_ANALYSER_ADA_CURVE_H_
+#endif // SESTET_TRACE_ANALYSER_ADA_FP_H_
 

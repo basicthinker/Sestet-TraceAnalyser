@@ -6,8 +6,8 @@
 
 #include <iostream>
 #include <cstdlib>
-#include "mem_max.h"
-#include "mem_ada.h"
+#include "max_fp.h"
+#include "ada_fp.h"
 #include "../simulator.h"
 
 using namespace std;
@@ -35,20 +35,21 @@ int main(int argc, const char* argv[]) {
 
   Ext4Simulator ext4_simu(in_file);
   AdaSimulator ada_simu(in_file);
-  MemoryMax mem_max;
-  MemoryAdaptive mem_ada(len, threshold, min_stale, ada_simu.engine());
+  MaxFootprint max_fp;
+  AdaptiveFootprint ada_fp(len, threshold, min_stale, ada_simu.engine());
 
-  ext4_simu.engine().Register(mem_max);
-  ada_simu.engine().Register(mem_ada);
+  ext4_simu.engine().Register(max_fp);
+  ada_simu.engine().Register(ada_fp);
 
   ext4_simu.Run();
   ada_simu.Run();
 
-  double max_rate = (double)mem_max.GetSize() * PAGE_SIZE / MB /
-      (mem_max.duration() / MINUTE);
-  double avg_fp = mem_ada.GetAverage() * PAGE_SIZE / KB;
-  cout << in_file << '\t' << mem_max.duration() << " s\t" << max_rate << " MB/min\t"
-      << mem_ada.num_trans() << '\t' << avg_fp << " KB" << endl;
+  double max_rate = (double)max_fp.GetSize() * PAGE_SIZE / MB /
+      (max_fp.duration() / MINUTE);
+  double avg_fp = ada_fp.GetAverage() * PAGE_SIZE / KB;
+  cout << in_file << '\t' << max_fp.duration() << " s\t"
+      << max_rate << " MB/min\t"
+      << ada_fp.num_trans() << '\t' << avg_fp << " KB" << endl;
   return 0;
 }
 
