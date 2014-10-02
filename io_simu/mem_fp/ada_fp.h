@@ -25,7 +25,7 @@ class AdaptiveFootprint : public MaxFootprint {
 
       len_(history_len), x_(history_len), y_(history_len), index_(0),
       tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
-      threshold_(threshold), engine_(engine), num_trans_(0), last_time_(0) {
+      threshold_(threshold), engine_(engine), num_trans_(0) {
   }
 
   int num_trans() const { return num_trans_; }
@@ -36,7 +36,6 @@ class AdaptiveFootprint : public MaxFootprint {
   void OnEvict(const DataItem &item, bool hit);
 
  private:
-  void AddToAverage(double time, double blocks);
   void Clear();
   unsigned int last_index() const {
     return index_ == 0 ? (len_ - 1) : (index_ - 1);
@@ -56,7 +55,6 @@ class AdaptiveFootprint : public MaxFootprint {
 
   int num_trans_;
   IntegralAverage average_;
-  double last_time_;
 };
 
 void AdaptiveFootprint::Clear() {
@@ -68,18 +66,9 @@ void AdaptiveFootprint::Clear() {
   ++num_trans_;
 }
 
-void AdaptiveFootprint::AddToAverage(double time, double blocks) {
-  if (time < last_time_) {
-    time = last_time_; // Times not guaranteed to strictly increase
-  }
-  last_time_ = time;
-
-  average_.Input(time, blocks);
-}
-
 void AdaptiveFootprint::OnRead(const DataItem &item, bool hit) {
   MaxFootprint::OnRead(item, hit);
-  AddToAverage(item.di_time, MaxFootprint::GetSize());
+  average_.Input(item.di_time, MaxFootprint::GetSize());
 }
 
 void AdaptiveFootprint::OnWrite(const DataItem &item, bool hit) {
@@ -91,7 +80,7 @@ void AdaptiveFootprint::OnWrite(const DataItem &item, bool hit) {
 
   if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear();
   inc_index();
-  AddToAverage(item.di_time, MaxFootprint::GetSize());
+  average_.Input(item.di_time, MaxFootprint::GetSize());
 }
 
 void AdaptiveFootprint::OnEvict(const DataItem &item, bool hit) {

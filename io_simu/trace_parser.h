@@ -32,14 +32,14 @@ struct te_page {
 
 class TraceParser {
   public:
-    TraceParser() {}
-    TraceParser(const char *file_name) { this->Open(file_name); }
+    TraceParser() : last_time_(0) { }
     ~TraceParser() { this->Close(); }
     bool Open(const char *file_name);
     bool Next(DataOperation &op, DataItem &item);
     void Close() { input_.close(); }
   private:
     std::ifstream input_;
+    double last_time_;
 };
 
 bool TraceParser::Open(const char *file_name) {
@@ -56,7 +56,13 @@ bool TraceParser::Next(DataOperation &op, DataItem &item) {
       !input_.read((char *)&page, sizeof(page))) {
     return false;
   }
+
   item.di_time = tv_float(tv);
+  if (item.di_time < last_time_) {
+    item.di_time = last_time_; // Times not guaranteed to strictly increase
+  }
+  last_time_ = item.di_time;
+
   item.di_file = page.te_ino;
   item.di_index = page.te_pgi;
   op = (DataOperation)page.te_op;
@@ -64,3 +70,4 @@ bool TraceParser::Next(DataOperation &op, DataItem &item) {
 }
 
 #endif // SESTET_TRACE_ANALYSER_PARSER_H_
+
