@@ -46,8 +46,9 @@ int main(int argc, const char* argv[]) {
 
   double max_rate = (double)mem_max.GetSize() * PAGE_SIZE / MB /
       (mem_max.duration() / MINUTE);
-  cout << in_file << '\t' << mem_max.duration() << '\t' << max_rate << '\t'
-      << mem_ada.num_trans() << endl;
+  double avg_fp = mem_ada.GetAverage() * PAGE_SIZE / KB;
+  cout << in_file << '\t' << mem_max.duration() << " s\t" << max_rate << " MB/min\t"
+      << mem_ada.num_trans() << '\t' << avg_fp << " KB" << endl;
   return 0;
 }
 

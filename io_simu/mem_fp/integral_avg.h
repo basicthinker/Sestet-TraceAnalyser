@@ -16,7 +16,7 @@ class IntegralAverage {
  public:
   IntegralAverage();
   void Input(double x, double y);
-  double GetAverage();
+  double GetAverage() const;
 
   double integral() const { return integral_; }
  private:
@@ -47,7 +47,7 @@ void IntegralAverage::Input(double x, double y) {
   }
 }
 
-double IntegralAverage::GetAverage() {
+double IntegralAverage::GetAverage() const {
   if (last_x_ == init_x_) return 0;
   else return integral_ / (last_x_ - init_x_);
 }

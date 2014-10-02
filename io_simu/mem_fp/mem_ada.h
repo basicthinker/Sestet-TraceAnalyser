@@ -24,20 +24,23 @@ class MemoryAdaptive : public SimuState {
 
       len_(history_len), x_(history_len), y_(history_len), index_(0),
       tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
-      threshold_(threshold), engine_(engine), num_trans_(0) {
+      threshold_(threshold), engine_(engine), num_trans_(0), last_time_(0) {
   }
 
   int num_trans() const { return num_trans_; }
+  double GetAverage() const { return average_.GetAverage(); }
 
+  void OnRead(const DataItem &item, bool hit);
   void OnWrite(const DataItem &item, bool hit);
   void OnEvict(const DataItem &item, bool hit);
 
  private:
+  void AddToAverage(double time, double blocks);
+  void Clear();
   unsigned int last_index() const {
     return index_ == 0 ? (len_ - 1) : (index_ - 1);
   }
   void inc_index() { index_ == len_ ? index_ = 0 : ++index_; }
-  void Clear();
 
   unsigned int index_;
   const unsigned int len_;
@@ -52,6 +55,7 @@ class MemoryAdaptive : public SimuState {
 
   int num_trans_;
   IntegralAverage average_;
+  double last_time_;
 };
 
 void MemoryAdaptive::Clear() {
@@ -62,6 +66,19 @@ void MemoryAdaptive::Clear() {
   ++num_trans_;
 }
 
+void MemoryAdaptive::AddToAverage(double time, double blocks) {
+  if (time < last_time_) {
+    time = last_time_; // Times not guaranteed to strictly increase
+  }
+  last_time_ = time;
+
+  average_.Input(time, blocks);
+}
+
+void MemoryAdaptive::OnRead(const DataItem &item, bool hit) {
+  AddToAverage(item.di_time, engine_.CacheSize());  
+}
+
 void MemoryAdaptive::OnWrite(const DataItem &item, bool hit) {
   tran_stale_ += 1;
   if (hit) tran_overwritten_ += 1;
@@ -70,6 +87,7 @@ void MemoryAdaptive::OnWrite(const DataItem &item, bool hit) {
 
   if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear();
   inc_index();
+  AddToAverage(item.di_time, engine_.CacheSize());  
 }
 
 void MemoryAdaptive::OnEvict(const DataItem &item, bool hit) {
