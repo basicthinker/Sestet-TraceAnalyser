@@ -19,10 +19,10 @@ class SimuEngine {
     void Register(SimuState &state);
     void Input(DataOperation op, const struct DataItem &item);
     void Clear();
-    bool to_fsync() { return to_fsync_; }
-    void set_to_fsync(bool to_fsync) { to_fsync_ = to_fsync; } 
+    bool is_fsync_flush() { return fsync_flush_; }
+    void set_fsync_flush(bool is_flush) { fsync_flush_ = is_flush; } 
  private:
-    bool to_fsync_;
+    bool fsync_flush_;
     std::set<DataTag> cache_; // simulates page cache
     std::list<SimuState *> states_;
 };
@@ -68,11 +68,11 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
       (*state_i)->OnFsync(item);
     }
 
-    if (to_fsync_) {
+    if (fsync_flush_) {
       for (std::set<DataTag>::iterator tag_i = cache_.begin();
           tag_i != cache_.end(); ) {
         if (tag_i->first == item.di_file) {
-          DataItem flushed = { -1, tag_i->first, tag_i->second };
+          DataItem flushed = { item.di_time, tag_i->first, tag_i->second };
           cache_.erase(tag_i++);
           for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
             (*state_i)->OnFlush(flushed);

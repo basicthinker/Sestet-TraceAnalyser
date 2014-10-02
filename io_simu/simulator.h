@@ -24,7 +24,7 @@ class Simulator {
 class Ext4Simulator : public Simulator {
   public:
     Ext4Simulator(const char *file) : Simulator(file), interval_(5) {
-      engine_.set_to_fsync(true);
+      engine_.set_fsync_flush(true);
     }
     void Run();
     double interval() const { return interval_; }
@@ -36,7 +36,7 @@ class Ext4Simulator : public Simulator {
 class AdaSimulator : public Simulator {
   public:
     AdaSimulator(const char *file) : Simulator(file) {
-      engine_.set_to_fsync(false);
+      engine_.set_fsync_flush(false);
     }
     void Run();
 };
