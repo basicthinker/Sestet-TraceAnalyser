@@ -10,6 +10,7 @@
 #include <vector>
 #include "../simu_state.h"
 #include "../simu_engine.h"
+#include "integral_avg.h"
 
 // Ported from GSL for simulation
 double
@@ -17,44 +18,49 @@ gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
                 const int n);
 
 class MemoryAdaptive : public SimuState {
-  public:
-    MemoryAdaptive(
-        const int history_len, const double threshold, const int min_stale,
-        SimuEngine &engine) :
-        len_(history_len), x_(history_len), y_(history_len), index_(0),
-        tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
-        threshold_(threshold), engine_(engine), num_trans_(0) { }
+ public:
+  MemoryAdaptive(const int history_len, const double threshold,
+      const int min_stale, SimuEngine &engine) :
 
-    int num_trans() const { return num_trans_; }
+      len_(history_len), x_(history_len), y_(history_len), index_(0),
+      tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
+      threshold_(threshold), engine_(engine), num_trans_(0) {
+  }
 
-    void OnWrite(const DataItem &item, bool hit);
-    void OnEvict(const DataItem &item, bool hit);
+  int num_trans() const { return num_trans_; }
 
-  private:
-    unsigned int last_index() const {
-      return index_ == 0 ? (len_ - 1) : (index_ - 1);
-    }
-    void inc_index() { index_ == len_ ? index_ = 0 : ++index_; }
-    void Clear() {
-      if (tran_stale_ < min_stale_) return;
-      tran_stale_ = 0;
-      tran_overwritten_ = 0;
-      engine_.Clear();
-      ++num_trans_;
-    }
+  void OnWrite(const DataItem &item, bool hit);
+  void OnEvict(const DataItem &item, bool hit);
 
-    unsigned int index_;
-    const unsigned int len_;
-    std::vector<double> x_;
-    std::vector<double> y_;
+ private:
+  unsigned int last_index() const {
+    return index_ == 0 ? (len_ - 1) : (index_ - 1);
+  }
+  void inc_index() { index_ == len_ ? index_ = 0 : ++index_; }
+  void Clear();
 
-    unsigned long tran_stale_;
-    unsigned long tran_overwritten_;
-    const int min_stale_;
-    const double threshold_;
-    SimuEngine &engine_;
-    int num_trans_;
+  unsigned int index_;
+  const unsigned int len_;
+  std::vector<double> x_;
+  std::vector<double> y_;
+
+  unsigned long tran_stale_;
+  unsigned long tran_overwritten_;
+  const int min_stale_;
+  const double threshold_;
+  SimuEngine &engine_;
+
+  int num_trans_;
+  IntegralAverage average_;
 };
+
+void MemoryAdaptive::Clear() {
+  if (tran_stale_ < min_stale_) return;
+  tran_stale_ = 0;
+  tran_overwritten_ = 0;
+  engine_.Clear();
+  ++num_trans_;
+}
 
 void MemoryAdaptive::OnWrite(const DataItem &item, bool hit) {
   tran_stale_ += 1;
