@@ -36,7 +36,7 @@ class AdaptiveFootprint : public MaxFootprint {
   void OnEvict(const DataItem &item, bool hit);
 
  private:
-  void Clear();
+  void Clear(double time);
   unsigned int last_index() const {
     return index_ == 0 ? (len_ - 1) : (index_ - 1);
   }
@@ -57,12 +57,12 @@ class AdaptiveFootprint : public MaxFootprint {
   IntegralAverage average_;
 };
 
-void AdaptiveFootprint::Clear() {
+void AdaptiveFootprint::Clear(double time) {
   if (tran_stale_ < min_stale_) return;
   MaxFootprint::Clear();
   tran_stale_ = 0;
   tran_overwritten_ = 0;
-  engine_.Clear();
+  engine_.Clear(time);
   ++num_trans_;
 }
 
@@ -78,7 +78,7 @@ void AdaptiveFootprint::OnWrite(const DataItem &item, bool hit) {
   x_[index_] = (double)tran_stale_;
   y_[index_] = (double)tran_overwritten_ / tran_stale_ * 100;
 
-  if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear();
+  if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear(item.di_time);
   inc_index();
   average_.Input(item.di_time, MaxFootprint::GetSize());
 }

@@ -19,10 +19,12 @@ class MaxFootprint : public SimuState {
   unsigned long GetSize() const { return cache_.size(); }
   double duration() const { return duration_; }
 
- private:
+ protected:
   std::set<DataTag> cache_;
-  void Access(double time, unsigned long file, unsigned long index);
   double duration_;
+ 
+ private:
+  void Access(double time, unsigned long file, unsigned long index);
 };
 
 void MaxFootprint::OnRead(const DataItem &item, bool hit) {
