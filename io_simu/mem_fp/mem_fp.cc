@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 #include "max_fp.h"
 #include "ada_fp.h"
 #include "ext4_fp.h"
@@ -48,11 +49,17 @@ int main(int argc, const char* argv[]) {
   ext4_simu.Run();
   ada_simu.Run();
 
+  const char *file_name = in_file + strlen(in_file);
+  while (*file_name != '/' && file_name >= in_file) {
+    --file_name;
+  }
+  ++file_name;
+
   double max_rate = (double)max_fp.GetSize() * PAGE_SIZE / MB /
       (max_fp.duration() / MINUTE);
   double ada_avg = ada_fp.GetAverage() * PAGE_SIZE / KB;
   double ext4_avg = ext4_fp.GetAverage() * PAGE_SIZE / KB;
-  cout << in_file << '\t' << max_fp.duration() << '\t' << max_rate << '\t'
+  cout << file_name << '\t' << max_fp.duration() << '\t' << max_rate << '\t'
       << ext4_fp.num_intervals() << '\t' << ext4_avg << '\t'
       << ada_fp.num_trans() << '\t' << ada_avg << endl;
 
