@@ -32,11 +32,11 @@ class AdaCurve : public OCurve {
       return index_ == 0 ? (len_ - 1) : (index_ - 1);
     }
     void inc_index() { index_ == len_ ? index_ = 0 : ++index_; }
-    void Clear() {
+    void Clear(double time) {
       if (tran_stale_ < min_stale_) return;
       tran_stale_ = 0;
       tran_overwritten_ = 0;
-      engine_.Clear();
+      engine_.Clear(time);
     }
 
     unsigned int index_;
@@ -63,7 +63,7 @@ void AdaCurve::OnWrite(const DataItem &item, bool hit) {
   OPoint p(item.di_time, staleness(), (double)tran_overwritten_ / tran_stale_);
   tran_points_.push_back(p);
 
-  if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear();
+  if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear(item.di_time);
   inc_index();
 }
 

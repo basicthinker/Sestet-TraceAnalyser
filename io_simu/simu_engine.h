@@ -18,7 +18,7 @@ class SimuEngine {
   public:
     void Register(SimuState &state);
     void Input(DataOperation op, const struct DataItem &item);
-    void Clear();
+    void Clear(double time);
     bool is_fsync_flush() { return fsync_flush_; }
     void set_fsync_flush(bool is_flush) { fsync_flush_ = is_flush; } 
  private:
@@ -65,7 +65,7 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
       break;
     }
     for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
-      (*state_i)->OnFsync(item);
+      (*state_i)->ToFsync(item.di_time, item.di_file);
     }
 
     if (fsync_flush_) {
@@ -86,10 +86,15 @@ void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
   }
 }
 
-void SimuEngine::Clear() {
+void SimuEngine::Clear(double time) {
+  for (std::list<SimuState *>::iterator i = states_.begin();
+      i != states_.end(); ++i) {
+    (*i)->ToClear(time);
+  }
+
   for (std::set<DataTag>::iterator i = cache_.begin();
       i != cache_.end(); ++i) {
-    DataItem flushed = { -1, i->first, i->second };
+    DataItem flushed = { time, i->first, i->second };
     for (std::list<SimuState *>::iterator j = states_.begin();
         j != states_.end(); ++j) {
       (*j)->OnFlush(flushed);
@@ -99,3 +104,4 @@ void SimuEngine::Clear() {
 }
 
 #endif // SESTET_TRACE_ANALYSER_SIMU_ENGINE_H_
+

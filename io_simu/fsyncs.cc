@@ -23,8 +23,8 @@ class Fsyncs : public SimuState {
       stale_ += 1;
     }
 
-    void OnFsync(const DataItem &item) {
-      output_ << item.di_time << "\t"
+    void ToFsync(double time, unsigned long file) {
+      output_ << time << "\t"
           << (double)stale_ * PAGE_SIZE / MB << "\t"
           << 50 << std::endl;
     }

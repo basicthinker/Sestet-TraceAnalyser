@@ -56,7 +56,7 @@ void Ext4Simulator::Run() {
   while (parser_.Next(op, item)) {
     item.di_time -= begin_time;
     if (item.di_time > tran_time) {
-      engine_.Clear();
+      engine_.Clear(item.di_time);
       tran_time += interval_;
     }
     engine_.Input(op, item);
