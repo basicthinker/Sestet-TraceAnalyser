@@ -6,11 +6,13 @@
 
 #include <cerrno>
 #include <cstdlib>
+#include <cassert>
 #include <list>
 #include <iostream>
 #include <fstream>
+#include "simu_engine.h"
 #include "simulator.h"
-#include "ada_curve.h"
+#include "ada_curves.h"
 
 #define PAGE_SIZE 4096 // kernel config
 #define MB (1024 * 1024) // bytes
@@ -31,31 +33,27 @@ int main(int argc, const char *argv[]) {
   const int len = atoi(argv[5]);
   ofstream out_stream(out_file);
 
-  AdaSimulator ada_simu(in_file);
-  AdaCurve ada_curve(len, threshold, min_stale, ada_simu.engine());
+  Simulator simu(in_file);
+  LazyEngine engine;
+  simu.Register(&engine);
 
-  ada_simu.engine().Register(ada_curve);
+  AdaCurves curves(len, threshold, min_stale);
+  engine.Register(&curves);
 
-  ada_simu.Run();
+  simu.Run();
 
-  list<OPoint>::const_iterator ai = ada_curve.points().begin();
-  list<OPoint>::const_iterator ti = ada_curve.tran_points().begin();
-  for (; ai != ada_curve.points().end() && ti != ada_curve.tran_points().end();
+  list<OPoint>::const_iterator ai = curves.GetPoints().begin();
+  list<OPoint>::const_iterator ti = curves.GetTranPoints().begin();
+  for (; ai != curves.GetPoints().end() && ti != curves.GetTranPoints().end();
       ++ai, ++ti) {
-    if (ai->time() != ti->time() || ai->stale_blocks() != ti->stale_blocks()) {
-      cerr << "Error: Ada curves mismatch time and/or staleness." << endl;
-      return -EPROTO;
-    }
+    assert(ai->time() == ti->time() &&
+        ai->stale_blocks() == ti->stale_blocks());
     double mbs = (double)ai->stale_blocks() * PAGE_SIZE / MB; 
     out_stream << ai->time() << "\t" << mbs << "\t"
         << ai->percent() << "\t" << ti->percent() << endl;
   }
-
-  if (ai != ada_curve.points().end() || ti != ada_curve.tran_points().end()) {
-    cerr << "Error: mismatch of point numbers: overwrite curve = "
-        << ada_curve.points().size() << ", transaction curve = "
-        << ada_curve.tran_points().size() << endl;
-  }
+  assert(ai == curves.GetPoints().end() &&
+      ti == curves.GetTranPoints().end());
 
   out_stream.close();
   return 0;

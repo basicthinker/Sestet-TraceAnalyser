@@ -8,7 +8,6 @@
 #define SESTET_TRACE_ANALYSER_SIMU_ENGINE_H_
 
 #include <iostream>
-#include <set>
 #include <list>
 
 #include "data_item.h"

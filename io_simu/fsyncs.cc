@@ -19,11 +19,11 @@ class Fsyncs : public SimuState {
     Fsyncs(const char *file) : stale_(0) { output_.open(file); }
     ~Fsyncs() { output_.close(); }
 
-    void OnWrite(const DataItem &item, bool hit) {
+    void OnWrite(const DataItem &item) {
       stale_ += 1;
     }
 
-    void ToFsync(double time, unsigned long file) {
+    void OnFsync(double time, unsigned long file) {
       output_ << time << "\t"
           << (double)stale_ * PAGE_SIZE / MB << "\t"
           << 50 << std::endl;
@@ -42,11 +42,14 @@ int main(int argc, const char *argv[]) {
     return -EINVAL;
   }
 
-  Ext4Simulator ext4simu(argv[1]);
+  Simulator simu(argv[1]);
+  VFSEngine engine(5);
   Fsyncs fsyncs(argv[2]);
 
-  ext4simu.engine().Register(fsyncs);
-  ext4simu.Run();
+  simu.Register(&engine);
+  engine.Register(&fsyncs);
+
+  simu.Run();
   return 0;
 }
 
