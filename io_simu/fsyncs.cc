@@ -46,8 +46,8 @@ int main(int argc, const char *argv[]) {
   VFSEngine engine(5);
   Fsyncs fsyncs(argv[2]);
 
-  simu.Register(&engine);
-  engine.Register(&fsyncs);
+  simu.Register(engine);
+  engine.Register(fsyncs);
 
   simu.Run();
   return 0;

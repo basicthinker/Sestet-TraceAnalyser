@@ -16,7 +16,7 @@ class Cache {
   bool Erase(unsigned long file, unsigned long index);
   int Erase(unsigned long file);
   void Clear() { cache_.clear(); }
-  unsigned long Size() { return cache_.size(); }
+  unsigned long Size() const { return cache_.size(); }
  private:
   std::set<DataTag> cache_;
 };

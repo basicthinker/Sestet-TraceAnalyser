@@ -13,7 +13,7 @@
 class Simulator {
  public:
   Simulator(const char *file) { parser_.Open(file); }
-  Simulator &Register(SimuEngine *engine);
+  Simulator &Register(SimuEngine &engine);
   void Run();
   TraceParser &parser() { return parser_; }
  protected:
@@ -22,8 +22,8 @@ class Simulator {
   std::list<SimuEngine *> engines_;
 };
 
-Simulator &Simulator::Register(SimuEngine *engine) {
-  engines_.push_back(engine);
+Simulator &Simulator::Register(SimuEngine &engine) {
+  engines_.push_back(&engine);
   return *this;
 }
 

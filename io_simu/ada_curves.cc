@@ -35,10 +35,10 @@ int main(int argc, const char *argv[]) {
 
   Simulator simu(in_file);
   LazyEngine engine;
-  simu.Register(&engine);
+  simu.Register(engine);
 
   AdaCurves curves(len, threshold, min_stale);
-  engine.Register(&curves);
+  engine.Register(curves);
 
   simu.Run();
 

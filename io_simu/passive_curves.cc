@@ -34,10 +34,10 @@ int main(int argc, const char *argv[]) {
 
   PassiveCurve ideal_curve, ext4_curve;
 
-  lazy.Register(&ideal_curve);
-  vfs.Register(&ext4_curve);
+  lazy.Register(ideal_curve);
+  vfs.Register(ext4_curve);
 
-  simu.Register(&lazy).Register(&vfs);
+  simu.Register(lazy).Register(vfs);
 
   simu.Run();
 

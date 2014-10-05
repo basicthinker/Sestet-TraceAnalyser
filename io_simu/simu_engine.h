@@ -15,7 +15,7 @@
 
 class SimuEngine {
  public:
-  void Register(SimuState *state) { states_.push_back(state); }
+  SimuEngine &Register(SimuState &state);
   virtual void Input(DataOperation op, const struct DataItem &item) = 0;
  protected:
   std::list<SimuState *> states_;
@@ -37,6 +37,11 @@ class VFSEngine : public SimuEngine {
 };
 
 // Implementations
+
+SimuEngine &SimuEngine::Register(SimuState &state) {
+  states_.push_back(&state);
+  return *this;
+}
 
 void LazyEngine::Input(DataOperation op, const struct DataItem &item) {
   std::list<SimuState *>::iterator si;
