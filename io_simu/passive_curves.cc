@@ -10,7 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include "simulator.h"
-#include "o_curve.h"
+#include "passive_curve.h"
 
 #define PAGE_SIZE (4096) // kernel config
 #define MB (1024 * 1024) // bytes
@@ -32,7 +32,7 @@ int main(int argc, const char *argv[]) {
   LazyEngine lazy;
   VFSEngine vfs(5);
 
-  OCurve ideal_curve, ext4_curve;
+  PassiveCurve ideal_curve, ext4_curve;
 
   lazy.Register(&ideal_curve);
   vfs.Register(&ext4_curve);
@@ -41,17 +41,18 @@ int main(int argc, const char *argv[]) {
 
   simu.Run();
 
-  list<OPoint>::const_iterator ii = ideal_curve.points().begin();
-  list<OPoint>::const_iterator ei = ext4_curve.points().begin();
-  for (; ei != ext4_curve.points().end() && ii != ideal_curve.points().end();
-      ++ei, ++ii) {
+  list<OPoint>::const_iterator ii = ideal_curve.GetPoints().begin();
+  list<OPoint>::const_iterator ei = ext4_curve.GetPoints().begin();
+  for (; ei != ext4_curve.GetPoints().end() &&
+      ii != ideal_curve.GetPoints().end(); ++ei, ++ii) {
     assert(ei->time() == ii->time() &&
         ei->stale_blocks() == ii->stale_blocks());
     double mbs = (double)ei->stale_blocks() * PAGE_SIZE / MB;
     out_stream << ei->time() << "\t" << mbs << "\t"
         << ei->percent() << "\t" << ii->percent() << endl;
   }
-  assert(ei == ext4_curve.points().end() && ii == ideal_curve.points().end());
+  assert(ei == ext4_curve.GetPoints().end() &&
+      ii == ideal_curve.GetPoints().end());
 
   out_stream.close();
   return 0;

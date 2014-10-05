@@ -32,7 +32,7 @@ do
   fsyncs_txt=${trace_file%'.trace'}'.fsyncs'
   eps_file=${trace_file%'.trace'}'.eps'
 
-  ./curves.out $trace_file $trace_txt
+  ./passive_curves.out $trace_file $trace_txt
 #  ./fsyncs.out $trace_file $fsyncs_txt
 #  ./ada_curves.out $trace_file $ada_txt $min_stale $ada_threshold $ada_len
 done
