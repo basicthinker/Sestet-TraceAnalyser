@@ -32,15 +32,8 @@ do
   fsyncs_txt=${trace_file%'.trace'}'.fsyncs'
   eps_file=${trace_file%'.trace'}'.eps'
 
-  if [ ! -f $trace_txt ]; then
-    ./curves.out $trace_file $trace_txt
-  fi
-  if [ ! -f $fsyncs_txt ]; then
-    ./fsyncs.out $trace_file $fsyncs_txt
-  fi
-  ./ada_curves.out $trace_file $ada_txt $min_stale $ada_threshold $ada_len
-  if [ $? != 0 ]; then
-    echo "Error: failed to proc $trace_file"
-  fi
+  ./curves.out $trace_file $trace_txt
+#  ./fsyncs.out $trace_file $fsyncs_txt
+#  ./ada_curves.out $trace_file $ada_txt $min_stale $ada_threshold $ada_len
 done
 

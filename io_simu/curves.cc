@@ -5,6 +5,7 @@
 // Nov. 28, 2013
 
 #include <cerrno>
+#include <cassert>
 #include <list>
 #include <iostream>
 #include <fstream>
@@ -26,34 +27,31 @@ int main(int argc, const char *argv[]) {
   const char *out_file = argv[2];
   ofstream out_stream(out_file);
 
-  Ext4Simulator ext4simu(in_file);
-  AdaSimulator ada_simu(in_file);
-  OCurve ext4curve, ideal_curve;
+  Simulator simu(in_file);
 
-  ext4simu.engine().Register(ext4curve);
-  ada_simu.engine().Register(ideal_curve);
+  LazyEngine lazy;
+  VFSEngine vfs(5);
 
-  ext4simu.Run();
-  ada_simu.Run();
+  OCurve ideal_curve, ext4_curve;
 
-  list<OPoint>::const_iterator ei = ext4curve.points().begin();
+  lazy.Register(&ideal_curve);
+  vfs.Register(&ext4_curve);
+
+  simu.Register(&lazy).Register(&vfs);
+
+  simu.Run();
+
   list<OPoint>::const_iterator ii = ideal_curve.points().begin();
-  for (; ei != ext4curve.points().end() && ii != ideal_curve.points().end();
+  list<OPoint>::const_iterator ei = ext4_curve.points().begin();
+  for (; ei != ext4_curve.points().end() && ii != ideal_curve.points().end();
       ++ei, ++ii) {
-    if (ei->time() != ii->time() || ei->stale_blocks() != ii->stale_blocks()) {
-      cerr << "Error: mismatch of time and staleness." << endl;
-      return -EPROTO;
-    }
+    assert(ei->time() == ii->time() &&
+        ei->stale_blocks() == ii->stale_blocks());
     double mbs = (double)ei->stale_blocks() * PAGE_SIZE / MB;
     out_stream << ei->time() << "\t" << mbs << "\t"
         << ei->percent() << "\t" << ii->percent() << endl;
   }
-
-  if (ei != ext4curve.points().end() || ii != ideal_curve.points().end()) {
-    cerr << "Error: mismatch of point numbers: ext4 curve = "
-        << ext4curve.points().size() << ", ideal curve = "
-        << ideal_curve.points().size() << endl;
-  }
+  assert(ei == ext4_curve.points().end() && ii == ideal_curve.points().end());
 
   out_stream.close();
   return 0;

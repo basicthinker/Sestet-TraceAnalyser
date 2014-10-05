@@ -7,18 +7,18 @@
 #ifndef SESTET_TRACE_ANALYSER_O_CURVE_H_
 #define SESTET_TRACE_ANALYSER_O_CURVE_H_
 
+#include <list>
 #include "data_item.h"
 #include "simu_state.h"
 #include "simu_engine.h"
-#include <list>
+#include "cache.h"
 
 class OPoint {
   public:
-    OPoint(double time, unsigned long blocks, double ratio) {
-      set_time(time);
-      set_staleness(blocks);
-      set_ratio(ratio);
+    OPoint(double time, unsigned long blocks, double ratio) :
+        time_(time), stale_blocks_(blocks), ratio_(ratio) {
     }
+
     void set_time(double time) { time_ = time; }
     double time() const { return time_; }
 
@@ -35,30 +35,46 @@ class OPoint {
 };
 
 class OCurve : public SimuState {
-  public:
-    OCurve() : stale_(0), overwritten_(0) { }
-    const std::list<OPoint> &points() const { return points_; }
-    unsigned long staleness() const { return stale_; }
+ public:
+  OCurve() : stale_(0), overwritten_(0) { }
+  const std::list<OPoint> &points() const { return points_; }
+  unsigned long staleness() const { return stale_; }
 
-    virtual void OnWrite(const DataItem &item, bool hit) {
-      stale_ += 1;
-      if (hit) overwritten_ += 1;
+  virtual void OnWrite(const DataItem &item);
+  virtual void OnEvict(const DataItem &item);
+  virtual void OnFsync(double time, unsigned long file);
+  virtual void OnFlush(double time);
 
-      OPoint p(item.di_time, stale_, (double)overwritten_ / stale_);
-      points_.push_back(p);
-    }
-
-    virtual void OnEvict(const DataItem &item, bool hit) {
-      if (hit) {
-        overwritten_ += 1;
-        points_.back().set_ratio((double)overwritten_ / stale_);
-      }
-    }
-
-  private:
-    unsigned long stale_;
-    unsigned long overwritten_;
-    std::list<OPoint> points_;
+ private:
+  Cache write_cache_;
+  unsigned long stale_;
+  unsigned long overwritten_;
+  std::list<OPoint> points_;
 };
 
+void OCurve::OnWrite(const DataItem &item) {
+  bool hit = write_cache_.Insert(item.di_file, item.di_index);
+  stale_ += 1;
+  if (hit) overwritten_ += 1;
+  OPoint p(item.di_time, stale_, (double)overwritten_ / stale_);
+  points_.push_back(p);
+}
+
+void OCurve::OnEvict(const DataItem &item) {
+  bool hit = write_cache_.Erase(item.di_file, item.di_index);
+  if (hit) {
+    overwritten_ += 1;
+    points_.back().set_ratio((double)overwritten_ / stale_);
+  }
+}
+
+void OCurve::OnFsync(double time, unsigned long file) {
+  write_cache_.Erase(file);
+}
+
+void OCurve::OnFlush(double time) {
+  write_cache_.Clear();
+}
+
 #endif // SESTET_TRACE_ANALYSER_O_CURVE_H_
+

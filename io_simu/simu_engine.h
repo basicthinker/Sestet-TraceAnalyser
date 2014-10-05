@@ -15,92 +15,94 @@
 #include "simu_state.h"
 
 class SimuEngine {
-  public:
-    void Register(SimuState &state);
-    void Input(DataOperation op, const struct DataItem &item);
-    void Clear(double time);
-    bool is_fsync_flush() { return fsync_flush_; }
-    void set_fsync_flush(bool is_flush) { fsync_flush_ = is_flush; } 
+ public:
+  void Register(SimuState *state) { states_.push_back(state); }
+  virtual void Input(DataOperation op, const struct DataItem &item) = 0;
+ protected:
+  std::list<SimuState *> states_;
+};
+
+class LazyEngine : public SimuEngine {
+ public:
+  void Input(DataOperation op, const struct DataItem &item);
+};
+
+class VFSEngine : public SimuEngine {
+ public:
+  VFSEngine(double interval) : interval_(interval), next_flush_(interval) { }
+  void Input(DataOperation op, const struct DataItem &item);
+  double interval() const { return interval_; }
  private:
-    bool fsync_flush_;
-    std::set<DataTag> cache_; // simulates page cache
-    std::list<SimuState *> states_;
+  const double interval_;
+  double next_flush_;
 };
 
 // Implementations
-using std::cerr;
-using std::endl;
 
-inline void SimuEngine::Register(SimuState &state) {
-  states_.push_back(&state);
-}
-
-void SimuEngine::Input(DataOperation op, const struct DataItem &item) {
-  DataTag tag(item.di_file, item.di_index);
-  bool hit = (cache_.find(tag) != cache_.end());
-  std::list<SimuState *>::iterator state_i;
+void LazyEngine::Input(DataOperation op, const struct DataItem &item) {
+  std::list<SimuState *>::iterator si;
 
   switch (op) {
   case kDataRead:
-    for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
-      (*state_i)->OnRead(item, hit);
+    for (si = states_.begin(); si != states_.end(); ++si) {
+      (*si)->OnRead(item);
     }
     break;
   case kDataWrite:
-    if (!hit) cache_.insert(tag);
-    for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
-      (*state_i)->OnWrite(item, hit);
+    for (si = states_.begin(); si != states_.end(); ++si) {
+      (*si)->OnWrite(item);
     }
     break;
   case kDataEvict:
-    if (hit) cache_.erase(tag);
-    for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
-      (*state_i)->OnEvict(item, hit);
+    for (si = states_.begin(); si != states_.end(); ++si) {
+      (*si)->OnEvict(item);
+    }
+    break;
+  case kDataFsync:
+    break;
+  defalt:
+    std::cerr << "Warning: invalid trace entry type: " << op << std::endl;
+  }
+}
+
+void VFSEngine::Input(DataOperation op, const struct DataItem &item) {
+  std::list<SimuState *>::iterator si;
+
+  if (item.di_time > next_flush_) {
+    for (si = states_.begin(); si != states_.end(); ++si) {
+      (*si)->OnFlush(item.di_time);
+    }  
+    next_flush_ += interval_;
+  }
+
+  switch (op) {
+  case kDataRead:
+    for (si = states_.begin(); si != states_.end(); ++si) {
+      (*si)->OnRead(item);
+    }
+    break;
+  case kDataWrite:
+    for (si = states_.begin(); si != states_.end(); ++si) {
+      (*si)->OnWrite(item);
+    }
+    break;
+  case kDataEvict:
+    for (si = states_.begin(); si != states_.end(); ++si) {
+      (*si)->OnEvict(item);
     }
     break;
   case kDataFsync:
     if (item.di_index != 0) { // integrity check
-      cerr << "Warning: integrity check fails:"
-          " fsync item has non-zero index." << endl;
+      std::cerr << "Warning: fsync item has non-zero index." << std::endl;
       break;
     }
-    for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
-      (*state_i)->ToFsync(item.di_time, item.di_file);
-    }
-
-    if (fsync_flush_) {
-      for (std::set<DataTag>::iterator tag_i = cache_.begin();
-          tag_i != cache_.end(); ) {
-        if (tag_i->first == item.di_file) {
-          DataItem flushed = { item.di_time, tag_i->first, tag_i->second };
-          cache_.erase(tag_i++);
-          for (state_i = states_.begin(); state_i != states_.end(); ++state_i) {
-            (*state_i)->OnFlush(flushed);
-          }
-        } else ++tag_i;
-      }
+    for (si = states_.begin(); si != states_.end(); ++si) {
+      (*si)->OnFsync(item.di_time, item.di_file);
     }
     break;
- defalt:
-    cerr << "Warning: invalid trace entry type: " << op << endl;
+  defalt:
+    std::cerr << "Warning: invalid trace entry type: " << op << std::endl;
   }
-}
-
-void SimuEngine::Clear(double time) {
-  for (std::list<SimuState *>::iterator i = states_.begin();
-      i != states_.end(); ++i) {
-    (*i)->ToClear(time);
-  }
-
-  for (std::set<DataTag>::iterator i = cache_.begin();
-      i != cache_.end(); ++i) {
-    DataItem flushed = { time, i->first, i->second };
-    for (std::list<SimuState *>::iterator j = states_.begin();
-        j != states_.end(); ++j) {
-      (*j)->OnFlush(flushed);
-    }
-  }
-  cache_.clear();
 }
 
 #endif // SESTET_TRACE_ANALYSER_SIMU_ENGINE_H_
