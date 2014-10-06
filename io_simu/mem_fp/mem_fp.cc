@@ -7,21 +7,14 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include "max_fp.h"
-#include "ada_fp.h"
-#include "ext4_fp.h"
+#include "vfs_max.h"
+#include "ada_max.h"
+#include "../simu_engine.h"
 #include "../simulator.h"
 
 using namespace std;
 
-#define KB (1024)
-#define MB (1024 * KB)
-#define GB (1024 * MB)
-
-#define PAGE_SIZE (4 * KB)
-#define MEM_SIZE (GB)
-
-#define MINUTE (60)
+#define PAGE_KB (4)
 
 int main(int argc, const char* argv[]) {
   if (argc != 5) {
@@ -35,19 +28,15 @@ int main(int argc, const char* argv[]) {
   const double threshold = atof(argv[3]);
   const int len = atoi(argv[4]);
 
-  Ext4Simulator ext4_simu(in_file);
-  AdaSimulator ada_simu(in_file);
+  Simulator simu(in_file);
+  LazyEngine lazy;
+  simu.Register(lazy);
 
-  MaxFootprint max_fp;
-  AdaptiveFootprint ada_fp(len, threshold, min_stale, ada_simu.engine());
-  Ext4Footprint ext4_fp;
+  VFSMaxFP vfs_max;
+  AdaMaxFP ada_max(len, threshold, min_stale);
+  lazy.Register(vfs_max).Register(ada_max);
 
-  ext4_simu.engine().Register(max_fp);
-  ext4_simu.engine().Register(ext4_fp);
-  ada_simu.engine().Register(ada_fp);
-
-  ext4_simu.Run();
-  ada_simu.Run();
+  simu.Run();
 
   const char *file_name = in_file + strlen(in_file);
   while (*file_name != '/' && file_name >= in_file) {
@@ -55,13 +44,11 @@ int main(int argc, const char* argv[]) {
   }
   ++file_name;
 
-  double max_rate = (double)max_fp.GetSize() * PAGE_SIZE / MB /
-      (max_fp.duration() / MINUTE);
-  double ada_avg = ada_fp.GetAverage() * PAGE_SIZE / KB;
-  double ext4_avg = ext4_fp.GetAverage() * PAGE_SIZE / KB;
-  cout << file_name << '\t' << max_fp.duration() << '\t' << max_rate << '\t'
-      << ext4_fp.num_intervals() << '\t' << ext4_avg << '\t'
-      << ada_fp.num_trans() << '\t' << ada_avg << endl;
+  double vfs_rate = 2 * vfs_max.GetAverage() * PAGE_KB / vfs_max.duration();
+  double ada_rate = 2 * ada_max.GetAverage() * PAGE_KB / ada_max.duration();
+  assert(vfs_max.duration() == ada_max.duration());
+  cout << file_name << '\t' << vfs_max.duration() << '\t' << vfs_rate << '\t'
+      << ada_max.num_trans() << '\t' << ada_rate << endl;
 
   return 0;
 }

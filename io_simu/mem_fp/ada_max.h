@@ -1,16 +1,15 @@
-// ada_fp.h
+// ada_max.h
 // Sestet-TraceAnalyser
 //
 // Jinglei Ren <jinglei@ren.systems>
 // Oct. 1, 2014
 
-#ifndef SESTET_TRACE_ANALYSER_ADA_FP_H_
-#define SESTET_TRACE_ANALYSER_ADA_FP_H_
+#ifndef SESTET_TRACE_ANALYSER_ADA_MAX_H_
+#define SESTET_TRACE_ANALYSER_ADA_MAX_H_
 
 #include <vector>
 #include "../simu_state.h"
-#include "../simu_engine.h"
-#include "max_fp.h"
+#include "versioned_cache.h"
 #include "integral_avg.h"
 
 // Ported from GSL for simulation
@@ -18,25 +17,24 @@ double
 gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
                 const int n);
 
-class AdaptiveFootprint : public MaxFootprint {
+class AdaMaxFP : public SimuState {
  public:
-  AdaptiveFootprint(int history_len, double threshold, int min_stale,
-      SimuEngine &engine) :
-
+  AdaMaxFP(int history_len, double threshold, int min_stale) :
       len_(history_len), x_(history_len), y_(history_len), index_(0),
       tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
-      threshold_(threshold), engine_(engine), num_trans_(0) {
+      threshold_(threshold), duration_(0) {
   }
 
-  int num_trans() const { return num_trans_; }
+  int num_trans() const { return rw_cache_.version(); }
   double GetAverage() const { return average_.GetAverage(); }
+  double duration() const { return duration_; }
 
-  void OnRead(const DataItem &item, bool hit);
-  void OnWrite(const DataItem &item, bool hit);
-  void OnEvict(const DataItem &item, bool hit);
+  void OnRead(const DataItem &item);
+  void OnWrite(const DataItem &item);
+  void OnEvict(const DataItem &item);
 
  private:
-  void Clear(double time);
+  void NewTransaction(double time);
   unsigned int last_index() const {
     return index_ == 0 ? (len_ - 1) : (index_ - 1);
   }
@@ -51,44 +49,47 @@ class AdaptiveFootprint : public MaxFootprint {
   unsigned long tran_overwritten_;
   const int min_stale_;
   const double threshold_;
-  SimuEngine &engine_;
-
-  int num_trans_;
+  VersionedCache rw_cache_;
   IntegralAverage average_;
+  double duration_;
 };
 
-void AdaptiveFootprint::Clear(double time) {
+void AdaMaxFP::NewTransaction(double time) {
   if (tran_stale_ < min_stale_) return;
-  MaxFootprint::Clear();
   tran_stale_ = 0;
   tran_overwritten_ = 0;
-  engine_.Clear(time);
-  ++num_trans_;
+  rw_cache_.IncVersion();
 }
 
-void AdaptiveFootprint::OnRead(const DataItem &item, bool hit) {
-  MaxFootprint::OnRead(item, hit);
-  average_.Input(item.di_time, MaxFootprint::GetSize());
+void AdaMaxFP::OnRead(const DataItem &item) {
+  rw_cache_.Insert(item.di_file, item.di_index);
+  average_.Input(item.di_time, rw_cache_.Size());
+  duration_ = item.di_time;
 }
 
-void AdaptiveFootprint::OnWrite(const DataItem &item, bool hit) {
-  MaxFootprint::OnWrite(item, hit);
+void AdaMaxFP::OnWrite(const DataItem &item) {
+  bool hit = rw_cache_.Insert(item.di_file, item.di_index);
+  average_.Input(item.di_time, rw_cache_.Size());
+
   tran_stale_ += 1;
   if (hit) tran_overwritten_ += 1;
   x_[index_] = (double)tran_stale_;
   y_[index_] = (double)tran_overwritten_ / tran_stale_ * 100;
 
-  if (gsl_fit_linear(x_, y_, len_) < threshold_) Clear(item.di_time);
+  if (gsl_fit_linear(x_, y_, len_) < threshold_) NewTransaction(item.di_time);
   inc_index();
-  average_.Input(item.di_time, MaxFootprint::GetSize());
+  duration_ = item.di_time;
 }
 
-void AdaptiveFootprint::OnEvict(const DataItem &item, bool hit) {
+void AdaMaxFP::OnEvict(const DataItem &item) {
+  bool hit = rw_cache_.Erase(item.di_file, item.di_index);
+  average_.Input(item.di_time, rw_cache_.Size());
   if (hit) {
     tran_overwritten_ += 1;
     // Instant modification may help to smooth curve.
     y_[last_index()] = (double)tran_overwritten_ / tran_stale_ * 100;
   }
+  duration_ = item.di_time;
 }
 
 // Ported from GSL for simulation
@@ -120,5 +121,5 @@ gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
   return m_dxdy / m_dx2;
 }
 
-#endif // SESTET_TRACE_ANALYSER_ADA_FP_H_
+#endif // SESTET_TRACE_ANALYSER_ADA_MAX_H_
 
