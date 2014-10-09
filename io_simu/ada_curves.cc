@@ -21,24 +21,25 @@
 using namespace std;
 
 int main(int argc, const char *argv[]) {
-  if (argc != 6) {
+  if (argc != 7) {
     cout << "Usage: " << argv[0] << " [INPUT FILE] [OUTPUT FILE] "
-        "[MIN STALE] [THRESHOLD] [HISTORY LEN]" << endl;
+        "[MIN STALE] [MAX STALE] [THRESHOLD] [HISTORY LEN]" << endl;
     return -EINVAL;
   }
 
   const char *in_file = argv[1];
   const char *out_file = argv[2];
   const int min_stale = atoi(argv[3]);
-  const double threshold = atof(argv[4]);
-  const int len = atoi(argv[5]);
+  const int max_stale = atoi(argv[4]);
+  const double threshold = atof(argv[5]);
+  const int len = atoi(argv[6]);
   ofstream out_stream(out_file);
 
   Simulator simu(in_file);
   LazyEngine engine;
   simu.Register(engine);
 
-  AdaCurves curves(len, threshold, min_stale);
+  AdaCurves curves(len, threshold, min_stale, max_stale);
   engine.Register(curves);
 
   double duration = simu.Run();

@@ -19,10 +19,10 @@ gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
 
 class AdaMaxFP : public SimuState {
  public:
-  AdaMaxFP(int history_len, double threshold, int min_stale) :
+  AdaMaxFP(int history_len, double threshold, int min_stale, int max_stale) :
       len_(history_len), x_(history_len), y_(history_len), index_(0),
-      tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
-      threshold_(threshold) {
+      tran_stale_(0), tran_overwritten_(0),
+      min_stale_(min_stale), max_stale_(max_stale), threshold_(threshold) {
   }
 
   int num_trans() const { return rw_cache_.version(); }
@@ -47,6 +47,7 @@ class AdaMaxFP : public SimuState {
   unsigned long tran_stale_;
   unsigned long tran_overwritten_;
   const int min_stale_;
+  const int max_stale_;
   const double threshold_;
   VersionedCache rw_cache_;
   IntegralAverage average_;
@@ -73,7 +74,10 @@ void AdaMaxFP::OnWrite(const DataItem &item) {
   x_[index_] = (double)tran_stale_;
   y_[index_] = (double)tran_overwritten_ / tran_stale_ * 100;
 
-  if (gsl_fit_linear(x_, y_, len_) < threshold_) NewTransaction(item.di_time);
+  if (tran_stale_ >= max_stale_ ||
+      gsl_fit_linear(x_, y_, len_) < threshold_) {
+    NewTransaction(item.di_time);
+  }
   inc_index();
 }
 

@@ -17,23 +17,24 @@ using namespace std;
 #define PAGE_KB (4)
 
 int main(int argc, const char* argv[]) {
-  if (argc != 5) {
+  if (argc != 6) {
     cout << "Usage: " << argv[0] << " [INPUT FILE] "
-        "[MIN STALE] [THRESHOLD] [HISTORY LEN]" << endl;
+        "[MIN STALE] [MAX STALE] [THRESHOLD] [HISTORY LEN]" << endl;
     return -EINVAL;
   }
 
   const char *in_file = argv[1];
   const int min_stale = atoi(argv[2]);
-  const double threshold = atof(argv[3]);
-  const int len = atoi(argv[4]);
+  const int max_stale = atoi(argv[3]);
+  const double threshold = atof(argv[4]);
+  const int len = atoi(argv[5]);
 
   Simulator simu(in_file);
   LazyEngine lazy;
   simu.Register(lazy);
 
   VFSMaxFP vfs_max;
-  AdaMaxFP ada_max(len, threshold, min_stale);
+  AdaMaxFP ada_max(len, threshold, min_stale, max_stale);
   lazy.Register(vfs_max).Register(ada_max);
 
   double duration = simu.Run();

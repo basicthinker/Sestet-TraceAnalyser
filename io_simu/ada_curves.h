@@ -19,9 +19,10 @@ gsl_fit_linear (const std::vector<double> &x, const std::vector<double> &y,
 
 class AdaCurves : public SimuState {
   public:
-    AdaCurves(int history_len, double threshold, int min_stale) :
+    AdaCurves(int history_len, double threshold, int min_stale, int max_stale) :
         len_(history_len), x_(history_len), y_(history_len), index_(0),
-        min_stale_(min_stale), threshold_(threshold), flushed_blocks_(0) {
+        min_stale_(min_stale), max_stale_(max_stale), threshold_(threshold),
+        flushed_blocks_(0) {
     }
     const std::list<OPoint> &GetPoints() const { return curve_.points(); }
     const std::list<OPoint> &GetTranPoints() const {
@@ -44,6 +45,7 @@ class AdaCurves : public SimuState {
     std::vector<double> y_;
 
     const int min_stale_;
+    const int max_stale_;
     const double threshold_;
     Cache write_cache_;
     OCurve curve_;
@@ -59,8 +61,9 @@ void AdaCurves::OnWrite(const DataItem &item) {
   x_[index_] = tran_curve_.stale();
   y_[index_] = tran_curve_.GetRatio() * 100;
 
-  if (gsl_fit_linear(x_, y_, len_) < threshold_ &&
-      tran_curve_.stale() >= min_stale_) {
+  if (tran_curve_.stale() >= max_stale_ ||
+      (gsl_fit_linear(x_, y_, len_) < threshold_ &&
+      tran_curve_.stale() >= min_stale_)) {
     flushed_blocks_ += write_cache_.Size();
     write_cache_.Clear();
     tran_curve_.NewTransaction();

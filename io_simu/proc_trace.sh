@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 [TRACE DIR] [MIN STALE=128] " \
+  echo "Usage: $0 [TRACE DIR] [MIN STALE=128] [MAX STALE=25600]" \
     "[ADA THRESHOLD = -0.02] [ADA LEN=16]"
   exit 1
 fi
@@ -14,13 +14,19 @@ else
 fi
 
 if [ $# -ge 3 ]; then
-  ada_threshold=$3
+  max_stale=$3
+else
+  max_stale='25600'
+fi
+
+if [ $# -ge 4 ]; then
+  ada_threshold=$4
 else
   ada_threshold='-0.02'
 fi
 
-if [ $# -ge 4 ]; then
-  ada_len=$4
+if [ $# -ge 5 ]; then
+  ada_len=$5
 else
   ada_len='16'
 fi
@@ -34,6 +40,7 @@ do
 
   ./passive_curves.out $trace_file $trace_txt
   ./fsyncs.out $trace_file $fsyncs_txt
-  ./ada_curves.out $trace_file $ada_txt $min_stale $ada_threshold $ada_len
+  ./ada_curves.out $trace_file $ada_txt $min_stale $max_stale \
+       $ada_threshold $ada_len
 done
 
