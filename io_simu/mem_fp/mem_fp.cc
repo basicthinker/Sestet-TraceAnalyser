@@ -36,7 +36,7 @@ int main(int argc, const char* argv[]) {
   AdaMaxFP ada_max(len, threshold, min_stale);
   lazy.Register(vfs_max).Register(ada_max);
 
-  simu.Run();
+  double duration = simu.Run();
 
   const char *file_name = in_file + strlen(in_file);
   while (*file_name != '/' && file_name >= in_file) {
@@ -44,10 +44,9 @@ int main(int argc, const char* argv[]) {
   }
   ++file_name;
 
-  double vfs_rate = 2 * vfs_max.GetAverage() * PAGE_KB / vfs_max.duration();
-  double ada_rate = 2 * ada_max.GetAverage() * PAGE_KB / ada_max.duration();
-  assert(vfs_max.duration() == ada_max.duration());
-  cout << file_name << '\t' << vfs_max.duration() << '\t' << vfs_rate << '\t'
+  double vfs_rate = 2 * vfs_max.GetAverage() * PAGE_KB / duration;
+  double ada_rate = 2 * ada_max.GetAverage() * PAGE_KB / duration;
+  cout << file_name << '\t' << duration << '\t' << vfs_rate << '\t'
       << ada_max.num_trans() << '\t' << ada_rate << endl;
 
   return 0;

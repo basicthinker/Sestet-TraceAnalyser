@@ -14,8 +14,7 @@ class Simulator {
  public:
   Simulator(const char *file) { parser_.Open(file); }
   Simulator &Register(SimuEngine &engine);
-  void Run();
-  TraceParser &parser() { return parser_; }
+  double Run();
  protected:
   void FeedEngines(DataOperation op, const struct DataItem &item);
   TraceParser parser_;
@@ -34,19 +33,22 @@ void Simulator::FeedEngines(DataOperation op, const struct DataItem &item) {
   }
 }
 
-void Simulator::Run() {
+double Simulator::Run() {
   DataOperation op;
   DataItem item;
 
-  if (!parser_.Next(op, item)) return;
+  if (!parser_.Next(op, item)) return 0;
   const double begin_time = item.di_time;
 
   item.di_time -= begin_time;
+  double duration = item.di_time;
   FeedEngines(op, item);
   while (parser_.Next(op, item)) {
     item.di_time -= begin_time;
+    duration = item.di_time;
     FeedEngines(op, item);
   }
+  return duration;
 }
 
 #endif // SESTET_TRACE_ANALYSER_SIMULATOR_H_

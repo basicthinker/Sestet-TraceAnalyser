@@ -41,7 +41,7 @@ int main(int argc, const char *argv[]) {
   AdaCurves curves(len, threshold, min_stale);
   engine.Register(curves);
 
-  simu.Run();
+  double duration = simu.Run();
 
   list<OPoint>::const_iterator ai = curves.GetPoints().begin();
   list<OPoint>::const_iterator ti = curves.GetTranPoints().begin();
@@ -58,7 +58,7 @@ int main(int argc, const char *argv[]) {
 
   // additional stats
   unsigned long kbs = curves.flushed_blocks() * PAGE_SIZE / KB;
-  cout << in_file << '\t' << kbs << endl;
+  cout << in_file << '\t' << kbs / duration << endl;
 
   out_stream.close();
   return 0;

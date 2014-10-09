@@ -22,12 +22,11 @@ class AdaMaxFP : public SimuState {
   AdaMaxFP(int history_len, double threshold, int min_stale) :
       len_(history_len), x_(history_len), y_(history_len), index_(0),
       tran_stale_(0), tran_overwritten_(0), min_stale_(min_stale),
-      threshold_(threshold), duration_(0) {
+      threshold_(threshold) {
   }
 
   int num_trans() const { return rw_cache_.version(); }
   double GetAverage() const { return average_.GetAverage(); }
-  double duration() const { return duration_; }
 
   void OnRead(const DataItem &item);
   void OnWrite(const DataItem &item);
@@ -51,7 +50,6 @@ class AdaMaxFP : public SimuState {
   const double threshold_;
   VersionedCache rw_cache_;
   IntegralAverage average_;
-  double duration_;
 };
 
 void AdaMaxFP::NewTransaction(double time) {
@@ -64,7 +62,6 @@ void AdaMaxFP::NewTransaction(double time) {
 void AdaMaxFP::OnRead(const DataItem &item) {
   rw_cache_.Insert(item.di_file, item.di_index);
   average_.Input(item.di_time, rw_cache_.Size());
-  duration_ = item.di_time;
 }
 
 void AdaMaxFP::OnWrite(const DataItem &item) {
@@ -78,7 +75,6 @@ void AdaMaxFP::OnWrite(const DataItem &item) {
 
   if (gsl_fit_linear(x_, y_, len_) < threshold_) NewTransaction(item.di_time);
   inc_index();
-  duration_ = item.di_time;
 }
 
 void AdaMaxFP::OnEvict(const DataItem &item) {
@@ -89,7 +85,6 @@ void AdaMaxFP::OnEvict(const DataItem &item) {
     // Instant modification may help to smooth curve.
     y_[last_index()] = (double)tran_overwritten_ / tran_stale_ * 100;
   }
-  duration_ = item.di_time;
 }
 
 // Ported from GSL for simulation

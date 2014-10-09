@@ -40,7 +40,7 @@ int main(int argc, const char *argv[]) {
 
   simu.Register(lazy).Register(vfs);
 
-  simu.Run();
+  double duration = simu.Run();
 
   list<OPoint>::const_iterator ii = ideal_curve.GetPoints().begin();
   list<OPoint>::const_iterator ei = ext4_curve.GetPoints().begin();
@@ -56,7 +56,7 @@ int main(int argc, const char *argv[]) {
       ii == ideal_curve.GetPoints().end());
 
   unsigned long kbs = ext4_curve.flushed_blocks() * PAGE_SIZE / KB;
-  cout << in_file << '\t' << kbs << endl;
+  cout << in_file << '\t' << kbs / duration << endl;
 
   out_stream.close();
   return 0;
