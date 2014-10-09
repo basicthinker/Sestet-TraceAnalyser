@@ -21,12 +21,13 @@ class AdaCurves : public SimuState {
   public:
     AdaCurves(int history_len, double threshold, int min_stale) :
         len_(history_len), x_(history_len), y_(history_len), index_(0),
-        min_stale_(min_stale), threshold_(threshold) {
+        min_stale_(min_stale), threshold_(threshold), flushed_blocks_(0) {
     }
     const std::list<OPoint> &GetPoints() const { return curve_.points(); }
     const std::list<OPoint> &GetTranPoints() const {
       return tran_curve_.points();
     }
+    unsigned long flushed_blocks() const { return flushed_blocks_; }
 
     void OnWrite(const DataItem &item);
     void OnEvict(const DataItem &item);
@@ -47,6 +48,7 @@ class AdaCurves : public SimuState {
     Cache write_cache_;
     OCurve curve_;
     OCurve tran_curve_;
+    unsigned long flushed_blocks_;
 };
 
 void AdaCurves::OnWrite(const DataItem &item) {
@@ -59,6 +61,7 @@ void AdaCurves::OnWrite(const DataItem &item) {
 
   if (gsl_fit_linear(x_, y_, len_) < threshold_ &&
       tran_curve_.stale() >= min_stale_) {
+    flushed_blocks_ += write_cache_.Size();
     write_cache_.Clear();
     tran_curve_.NewTransaction();
   }

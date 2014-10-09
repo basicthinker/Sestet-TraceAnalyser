@@ -12,8 +12,9 @@
 #include "simulator.h"
 #include "passive_curve.h"
 
-#define PAGE_SIZE (4096) // kernel config
-#define MB (1024 * 1024) // bytes
+#define KB (1024) // bytes
+#define MB (1024 * KB)
+#define PAGE_SIZE (4 * KB) // kernel config
 
 using namespace std;
 
@@ -53,6 +54,9 @@ int main(int argc, const char *argv[]) {
   }
   assert(ei == ext4_curve.GetPoints().end() &&
       ii == ideal_curve.GetPoints().end());
+
+  unsigned long kbs = ext4_curve.flushed_blocks() * PAGE_SIZE / KB;
+  cout << in_file << '\t' << kbs << endl;
 
   out_stream.close();
   return 0;

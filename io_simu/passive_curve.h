@@ -15,7 +15,9 @@
 
 class PassiveCurve : public SimuState {
  public:
+  PassiveCurve() : flushed_blocks_(0) { }
   const std::list<OPoint> &GetPoints() const { return curve_.points(); }
+  unsigned long flushed_blocks() const { return flushed_blocks_; }
 
   virtual void OnWrite(const DataItem &item);
   virtual void OnEvict(const DataItem &item);
@@ -25,6 +27,7 @@ class PassiveCurve : public SimuState {
  private:
   Cache write_cache_;
   OCurve curve_;
+  unsigned long flushed_blocks_;
 };
 
 void PassiveCurve::OnWrite(const DataItem &item) {
@@ -40,10 +43,11 @@ void PassiveCurve::OnEvict(const DataItem &item) {
 }
 
 void PassiveCurve::OnFsync(double time, unsigned long file) {
-  write_cache_.Erase(file);
+  flushed_blocks_ += write_cache_.Erase(file);
 }
 
 void PassiveCurve::OnFlush(double time) {
+  flushed_blocks_ += write_cache_.Size();
   write_cache_.Clear();
 }
 

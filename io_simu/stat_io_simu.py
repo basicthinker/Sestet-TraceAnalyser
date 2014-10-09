@@ -39,6 +39,8 @@ data_set = {}
 files = [f for f in os.listdir(dir_name) if os.path.splitext(f)[1] == ".trace"]
 for filename in files:
     app = filename.split('-')[0]
+    if filename.split('-')[1] != "io":
+        continue
     trace_path = os.path.join(dir_name, filename) + ".txt"
     ada_path = os.path.join(dir_name, filename).replace(".trace", ".ada.txt")
     ext4_ret = parse_trace_file(trace_path)
